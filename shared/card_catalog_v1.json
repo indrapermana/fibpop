@@ -1,0 +1,175 @@
+{
+  "catalog_version": "1.0.0",
+  "source": "game-rules/Original_Game_Rules_EN.md",
+  "status": "prototype; not balance-verified",
+  "cards": [
+    {
+      "id": "card_01",
+      "category": "attacks",
+      "name_en": "Pressure!",
+      "copies": 8,
+      "rules_text_en": "Attack; deal 1 Heart of damage unless blocked."
+    },
+    {
+      "id": "card_02",
+      "category": "attacks",
+      "name_en": "Double Down",
+      "copies": 4,
+      "rules_text_en": "Attack; deal 1 damage. If it succeeds, the target discards 1 card."
+    },
+    {
+      "id": "card_03",
+      "category": "attacks",
+      "name_en": "Callout",
+      "copies": 3,
+      "rules_text_en": "Attack; deal 1 damage and ask the target to reveal their last played Action card, if any."
+    },
+    {
+      "id": "card_04",
+      "category": "attacks",
+      "name_en": "Corner Them",
+      "copies": 3,
+      "rules_text_en": "Attack; deal 1 damage. If the target has 2+ Suspicion, gain Behavior Evidence if they have a recorded qualifying action."
+    },
+    {
+      "id": "card_05",
+      "category": "defense",
+      "name_en": "Duck!",
+      "copies": 6,
+      "rules_text_en": "Reaction: prevent 1 damage to yourself."
+    },
+    {
+      "id": "card_06",
+      "category": "defense",
+      "name_en": "Deny It",
+      "copies": 4,
+      "rules_text_en": "Reaction: prevent 1 damage to yourself and remove 1 of your Suspicion."
+    },
+    {
+      "id": "card_07",
+      "category": "defense",
+      "name_en": "Step In",
+      "copies": 3,
+      "rules_text_en": "Reaction: prevent 1 damage to any target; playable only if that target did not defend."
+    },
+    {
+      "id": "card_08",
+      "category": "defense",
+      "name_en": "Countercheck",
+      "copies": 2,
+      "rules_text_en": "Reaction: prevent 1 damage to yourself; gain Behavior Evidence on the attacker if they have a qualifying public action."
+    },
+    {
+      "id": "card_09",
+      "category": "investigation",
+      "name_en": "Look Back",
+      "copies": 5,
+      "rules_text_en": "Gain Behavior Evidence against a player with a recorded Attack or Noisy action. Otherwise, gain none."
+    },
+    {
+      "id": "card_10",
+      "category": "investigation",
+      "name_en": "Follow the Trail",
+      "copies": 4,
+      "rules_text_en": "Gain Clue Evidence on a player; privately inspect 1 random card from their hand, if any."
+    },
+    {
+      "id": "card_11",
+      "category": "investigation",
+      "name_en": "Peek",
+      "copies": 3,
+      "rules_text_en": "Privately inspect 1 random card in another player's hand; draw 1 card."
+    },
+    {
+      "id": "card_12",
+      "category": "investigation",
+      "name_en": "Check Alibi",
+      "copies": 2,
+      "rules_text_en": "Gain Clue Evidence on a player; ask them to show their most recently played Action card, if any."
+    },
+    {
+      "id": "card_13",
+      "category": "manipulation",
+      "name_en": "Point Fingers",
+      "copies": 4,
+      "rules_text_en": "Give another player 1 Suspicion. **Noisy.**"
+    },
+    {
+      "id": "card_14",
+      "category": "manipulation",
+      "name_en": "Clean Slate",
+      "copies": 3,
+      "rules_text_en": "Remove up to 2 of your Suspicion. **Noisy** (then gain 1 back)."
+    },
+    {
+      "id": "card_15",
+      "category": "manipulation",
+      "name_en": "Stir the Pot",
+      "copies": 2,
+      "rules_text_en": "Two other Active players each discard 1 card. **Noisy.**"
+    },
+    {
+      "id": "card_16",
+      "category": "manipulation",
+      "name_en": "Card Swap",
+      "copies": 1,
+      "rules_text_en": "Swap 1 randomly selected card from your hand with 1 from another player's hand."
+    },
+    {
+      "id": "card_17",
+      "category": "recovery",
+      "name_en": "First Aid",
+      "copies": 4,
+      "rules_text_en": "Restore 1 Heart to yourself or any surviving player, including a Cornered player."
+    },
+    {
+      "id": "card_18",
+      "category": "recovery",
+      "name_en": "Catch Your Breath",
+      "copies": 3,
+      "rules_text_en": "Draw 2 cards and discard 1 card."
+    },
+    {
+      "id": "card_19",
+      "category": "recovery",
+      "name_en": "Last Chance",
+      "copies": 1,
+      "rules_text_en": "Reaction: if you are Cornered and no accusation was made, recover to 1 Heart immediately."
+    },
+    {
+      "id": "card_20",
+      "category": "recovery",
+      "name_en": "Patch Up",
+      "copies": 1,
+      "rules_text_en": "Restore 1 of your Hearts and remove 1 Suspicion."
+    },
+    {
+      "id": "card_21",
+      "category": "special",
+      "name_en": "Safe Place",
+      "copies": 2,
+      "rules_text_en": "Choose yourself or another Active player; the next damage they would take before your next turn is prevented."
+    },
+    {
+      "id": "card_22",
+      "category": "special",
+      "name_en": "Extra Clue",
+      "copies": 2,
+      "rules_text_en": "Gain Clue Evidence against one player and inspect 1 random card from their hand; they may discard 1 card to prevent the inspection (but not the Evidence)."
+    },
+    {
+      "id": "card_23",
+      "category": "special",
+      "name_en": "Spotlight",
+      "copies": 1,
+      "rules_text_en": "All players show their Suspicion markers; draw 1 card."
+    },
+    {
+      "id": "card_24",
+      "category": "special",
+      "name_en": "Misdirection",
+      "copies": 1,
+      "rules_text_en": "Reaction to investigation: prevent someone from looking at your hand; Evidence from their card still applies."
+    }
+  ]
+}

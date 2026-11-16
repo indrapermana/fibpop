@@ -1,0 +1,11 @@
+.DS_Store
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.idea/
+.packages
+.wrangler/
+build/
+coverage/
+node_modules/
+**/node_modules/

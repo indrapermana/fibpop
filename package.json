@@ -1,0 +1,24 @@
+{
+  "name": "fibpop",
+  "private": true,
+  "workspaces": [
+    "packages/game-engine",
+    "services/backend"
+  ],
+  "scripts": {
+    "lint": "eslint packages services --ext .ts",
+    "format": "prettier --write \"packages/**/*.{ts,json}\" \"services/**/*.{ts,json,jsonc}\" \"shared/fixtures/*.json\" \"*.{json,jsonc,mjs}\" \".github/**/*.yml\"",
+    "format:check": "prettier --check \"packages/**/*.{ts,json}\" \"services/**/*.{ts,json,jsonc}\" \"shared/fixtures/*.json\" \"*.{json,jsonc,mjs}\" \".github/**/*.yml\"",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "eslint": "^9.28.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.34.1",
+    "vitest": "^3.2.4"
+  }
+}

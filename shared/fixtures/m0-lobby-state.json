@@ -1,0 +1,66 @@
+{
+  "fixtureVersion": 1,
+  "rulesVersion": "2.1.0",
+  "catalogVersion": "1.0.0",
+  "name": "m0-four-player-lobby-state",
+  "initialState": {
+    "matchId": "fixture-match",
+    "rulesVersion": "2.1.0",
+    "catalogVersion": "1.0.0",
+    "phase": "lobby",
+    "version": 0,
+    "currentPlayerId": null,
+    "seatOrder": ["player-1", "player-2", "player-3", "player-4"],
+    "deadlineUtc": null,
+    "players": {
+      "player-1": {
+        "playerId": "player-1",
+        "role": null,
+        "status": "active",
+        "hearts": 3,
+        "suspicion": 0,
+        "hand": [],
+        "evidence": {},
+        "accusationUsed": false
+      },
+      "player-2": {
+        "playerId": "player-2",
+        "role": null,
+        "status": "active",
+        "hearts": 3,
+        "suspicion": 0,
+        "hand": [],
+        "evidence": {},
+        "accusationUsed": false
+      },
+      "player-3": {
+        "playerId": "player-3",
+        "role": null,
+        "status": "active",
+        "hearts": 3,
+        "suspicion": 0,
+        "hand": [],
+        "evidence": {},
+        "accusationUsed": false
+      },
+      "player-4": {
+        "playerId": "player-4",
+        "role": null,
+        "status": "active",
+        "hearts": 3,
+        "suspicion": 0,
+        "hand": [],
+        "evidence": {},
+        "accusationUsed": false
+      }
+    },
+    "drawPile": [],
+    "discardPile": [],
+    "activeEffects": [],
+    "accusationUsed": [],
+    "winner": null
+  },
+  "commands": [],
+  "expectedPublicDelta": [],
+  "expectedPrivateDelta": {}
+}

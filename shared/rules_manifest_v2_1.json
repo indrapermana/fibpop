@@ -1,0 +1,42 @@
+{
+  "rulesVersion": "2.1.0",
+  "catalogVersion": "1.0.0",
+  "protocolVersion": 2,
+  "approvedAt": "2026-11-16",
+  "players": {
+    "min": 4,
+    "max": 8,
+    "impostorCount": 1,
+    "startingHearts": 3
+  },
+  "turn": {
+    "draw": 2,
+    "actions": 2,
+    "attacksMax": 1,
+    "handLimit": 7
+  },
+  "accusation": {
+    "secondsPerEligiblePlayer": 10,
+    "clueRequired": 1,
+    "behaviorRequired": 1,
+    "maxAccusationsPerPlayer": 1
+  },
+  "corneredRecovery": {
+    "heartsRecovered": 1,
+    "skipDrawAndActions": true
+  },
+  "secretFinish": {
+    "requiresActiveImpostor": true,
+    "requiresCorneredInnocent": true,
+    "actionCost": 0,
+    "oncePerCorneredEvent": true,
+    "anonymousPublicResult": true,
+    "physicalChoiceCards": 16
+  },
+  "victory": {
+    "impostorMustBeSoleNonEliminated": true,
+    "corneredIsNotEliminated": true,
+    "impostorMayWinWhileCornered": true,
+    "impostorForfeit": "CANCELLED_NO_WINNER"
+  }
+}

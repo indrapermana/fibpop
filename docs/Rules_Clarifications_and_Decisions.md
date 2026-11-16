@@ -1,0 +1,66 @@
+# FIBPOP — Approved Rules and Decision Register
+
+**Decision date:** 2026-11-16  
+**Decision status:** Five gameplay choices explicitly approved by product owner; remaining defaults approved; deterministic technical interpretation documented below.  
+**Canonical rulebooks:** `game-rules/Original_Game_Rules_EN.md` and `Original_Game_Rules_ID.md`, rules **2.1**.  
+**Card inventory:** **unchanged**, 24 designs / 72 cards. Add 16 **non-action Secret Finish choice cards** (8 FINISH + 8 PASS) as physical-game accessories; they are *not* added to the action deck.
+
+## Explicitly approved choices
+
+| ID | Decision | Locked behavior |
+|---|---|---|
+| R01 | Cornered recovery = **skip** | At next scheduled turn, if still Cornered, recover to 1 Heart, skip draw and actions, resume next turn. |
+| R02 | Impostor finishing = **secret** | After a Cornered player's accusation window, an Active Impostor may finish a Cornered Innocent without exposing their identity. No normal action cost; one opportunity per Cornered event, regardless of whose turn it is. |
+| R03 | Accusation timer = **10 seconds per eligible player** | Eligible Active Innocents offered in priority order. Timed-out offer is a pass. |
+| R12 | Final Innocent Cornered = **must finish** | No immediate victory; the final Innocent must be permanently eliminated. |
+| R-evidence | **Two** Evidence types | One Clue and one Behavior marker held by an Active Innocent against the same Cornered suspect; each player may formally accuse once per match. |
+
+## Approved defaults and implementation interpretations
+
+| ID | Final rule |
+|---|---|
+| R04 | Playing an Action card or Basic Observe costs 1 action, unless explicitly specified otherwise. Reactions don't; no recursive Reaction chain without explicit card text. |
+| R05 | Attack target responds first; if target declines to defend, other eligible Active players may play Step In in clockwise order; at most one successful defense. |
+| R06 | Last Chance may activate only after the **entire** accusation window and Secret Finish opportunity resolve without elimination. |
+| R07 | Max one Safe Place shield per target; expires upon damage prevention or caster's next turn. |
+| R08 | **Superseded:** Reveal & Finish and reveal lifecycle no longer exist. Secret Finish keeps the Impostor hidden. Any roles revealed by accusation or elimination remain revealed. |
+| R09 | Behavior Evidence requires an observed, logged successful attack or a publicly visible Noisy manipulation; Base Observe must have qualifying history. |
+| R10 | Keep Spotlight unchanged for the prototype and measure its utility. |
+| R11 | Check Alibi grants Clue Evidence even if no previous action is recorded; reveal action only when one exists. |
+| R13 | If all Innocents are permanently eliminated, the Impostor wins **even when Cornered**. If at least one Innocent is Cornered but not eliminated, no Impostor victory yet. Correct accusation always ends as an Innocent solo victory. A wrong accusation that eliminates the final two Innocents produces an Impostor victory as long as the Impostor remains non-eliminated. |
+| R14 | Disconnection alone never eliminates. Use configurable reconnect grace; Innocent forfeiture is permanent elimination. If the Impostor permanently forfeits, cancel the match (no individual winner). Do not confuse a forfeit with a correct accusation. |
+| R15 | Offline bot receives only its own private state plus authorized public state, never other hidden roles. |
+
+## Secret Finish procedure and rationale
+
+**Decision consequence:** An Impostor-only anonymous ability is easy to authenticate digitally, but physically it requires a trust-based anonymous submission procedure; cryptographic verification is impossible with only ordinary hidden cards and no moderator. To preserve the physical-card format, add **two choice cards per player** (FINISH and PASS) with identical backs, separate from the 72-card action deck.
+
+1. After zero Hearts is reached, process all eligible accusations in order. A correct accusation immediately ends the match; a wrong accusation immediately eliminates two players and runs a winner check.
+2. If there was **no accusation** and target is still Cornered, every Active non-Cornered player submits exactly one choice card face down; shuffle choices anonymously before revealing. Only the Active Impostor is allowed to submit FINISH; all others must PASS. If the Impostor is Cornered, all eligible participants PASS.
+3. One FINISH means the Cornered Innocent is eliminated, and only the victim's role is revealed. Zero FINISH means no elimination. More than one FINISH is invalid: retry once, then treat as PASS if still invalid; record fair-play incident.
+4. Collect and redistribute anonymous choice cards so every player holds one FINISH and one PASS again; do not trace votes to prior owners. If victim survives, allow Last Chance. Then resume the interrupted turn.
+5. **Digital authority:** Client submits authenticated `SECRET_FINISH` or `PASS_SECRET_FINISH` only if eligible. Server privately verifies role and phase, applies one result, and broadcasts only the public result. To avoid revealing who acted via timing, use a **simultaneous sealed-choice window** (suggest 10 seconds total, as an implementation parameter, not the owner's accusation timer), publishing results only when the window closes or all valid choices received; do not broadcast individual responses.
+
+**Physical prototype integrity note:** A dishonest Innocent could submit FINISH anonymously; such a game cannot prove voter eligibility without a moderator or a stronger physical cryptographic prop. This is a *known tabletop limitation*, not a valid online implementation shortcut. If strict physical enforcement is required later, redesign the tabletop procedure separately.
+
+## Deterministic sequence and terminal-state precedence
+
+`resolve attack → defense → damage → Cornered → sequential accusation offers (10 s each) → on accusation, resolve and check winner → if no accusation, sealed Secret Finish vote → victim elimination and winner check → Last Chance (if eligible) → resume turn → next scheduled Cornered recovery/skip`.
+
+- Do not offer Secret Finish if any formal accusation was actually submitted/resolved in that Cornered event; the wrong accusation may already have eliminated the suspect.
+- Do not declare Impostor victory just because all remaining Innocents have 0 Hearts. Only permanent elimination counts.
+- If the Impostor is the **only non-eliminated** player, it wins whether its Hearts are 0 or above.
+- Correct accusation is evaluated as the terminal win immediately, before any finish/victory cycle.
+- If the Impostor is permanently forfeited, terminate as cancelled/no winner; there is no unwinnable waiting state.
+- Invalid/duplicate/stale actions have no state effect; deadlines resolve once.
+
+## Remaining balance questions (NOT missing implementation rules)
+
+Investigation may not reveal enough information to make accusations satisfying; Spotlight utility and 4-player Impostor win rates require playtesting. These do not authorize silently modifying published rules or card quantities.
+
+## Versioning
+
+- `rulesVersion`: **2.1.0**.
+- `catalogVersion`: **1.0.0** unchanged; no changes to 72 playing-card definitions/effects.
+- `protocolVersion`: bump to **2** before implementation of Secret Finish protocol; protocol proposal is updated.
+- All cross-engine tests must cover the exact steps above; edits require an explicit new decision and version bump.
