@@ -1,6 +1,7 @@
 import { playActionCard } from './action-card.js';
 import { validateAttackTarget } from './commands.js';
 import { getCardDesignId } from './card-instance.js';
+import { beginCorneredResolution } from './cornered.js';
 import { EngineError } from './errors.js';
 import { grantEvidence } from './investigations.js';
 import { matchStateSchema, type MatchState } from './state.js';
@@ -137,7 +138,7 @@ export function currentAttackResponder(state: MatchState): string | null {
   return pending.stepInPlayerIds[pending.stepInIndex] ?? null;
 }
 
-function resolveDamage(state: MatchState): MatchState {
+function resolveDamage(state: MatchState, nowMs?: number): MatchState {
   const pending = state.pendingAttack;
   if (!pending) {
     throw new EngineError('INVALID_REACTION', 'There is no attack to resolve');
@@ -203,6 +204,9 @@ function resolveDamage(state: MatchState): MatchState {
           attackerPlayerId: pending.attackerPlayerId,
           targetPlayerId: pending.targetPlayerId,
           attackCardInstanceId: pending.attackCardInstanceId,
+          accusationOrderPlayerIds: [],
+          accusationIndex: 0,
+          secretFinishResolved: false,
         }
       : null,
     discardPile:
@@ -215,10 +219,22 @@ function resolveDamage(state: MatchState): MatchState {
     pending.attackerPlayerId,
   );
 
-  return matchStateSchema.parse({
+  const resolvedState = matchStateSchema.parse({
     ...recordedState,
     version: state.version + 1,
   });
+  if (!cornered) {
+    return resolvedState;
+  }
+
+  if (nowMs === undefined) {
+    throw new EngineError(
+      'INVALID_DEADLINE',
+      'A timestamp is required to open the Cornered accusation window',
+    );
+  }
+
+  return beginCorneredResolution(resolvedState, nowMs);
 }
 
 function resolveDefense(
@@ -309,6 +325,7 @@ export function respondToAttack(
   state: MatchState,
   responderPlayerId: string,
   response: AttackResponse,
+  nowMs?: number,
 ): MatchState {
   if (state.phase !== 'awaiting_reaction' || state.pendingAttack === null) {
     throw new EngineError(
@@ -371,7 +388,7 @@ export function respondToAttack(
         },
       });
       if (pending.stepInPlayerIds.length === 0) {
-        return resolveDamage(stateWithDiscardChoice);
+        return resolveDamage(stateWithDiscardChoice, nowMs);
       }
 
       return matchStateSchema.parse({
@@ -393,7 +410,7 @@ export function respondToAttack(
 
     const nextStepInIndex = pending.stepInIndex + 1;
     if (nextStepInIndex >= pending.stepInPlayerIds.length) {
-      return resolveDamage(state);
+      return resolveDamage(state, nowMs);
     }
 
     return matchStateSchema.parse({

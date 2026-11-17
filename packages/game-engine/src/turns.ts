@@ -226,3 +226,101 @@ export function endTurn(
     activeEffects,
   });
 }
+
+export function advanceTurnAfterElimination(state: MatchState): MatchState {
+  if (state.phase !== 'active_turn') {
+    throw new EngineError(
+      'INVALID_PHASE',
+      'An eliminated turn owner can only be advanced from active_turn',
+    );
+  }
+
+  const currentPlayerId = state.currentPlayerId;
+  if (currentPlayerId === null || !state.seatOrder.includes(currentPlayerId)) {
+    throw new EngineError(
+      'INVALID_PLAYER',
+      'The eliminated turn owner must have a seat',
+    );
+  }
+
+  if (state.players[currentPlayerId]?.status !== 'eliminated') {
+    throw new EngineError(
+      'NOT_ELIGIBLE',
+      'The current turn owner must be eliminated before advancing',
+    );
+  }
+
+  const players = { ...state.players };
+  let activeEffects = state.activeEffects.filter(
+    (effect) => effect.casterPlayerId !== currentPlayerId,
+  );
+  let nextPlayerId: string | null = null;
+  let firstRecoveredPlayerId: string | null = null;
+  const currentSeatIndex = state.seatOrder.indexOf(currentPlayerId);
+
+  for (let offset = 1; offset <= state.seatOrder.length; offset += 1) {
+    const candidateId =
+      state.seatOrder[(currentSeatIndex + offset) % state.seatOrder.length];
+    const candidate = players[candidateId];
+    if (!candidate) {
+      throw new Error(`Missing player state for seat ${candidateId}`);
+    }
+
+    if (candidate.status === 'eliminated') {
+      continue;
+    }
+
+    activeEffects = activeEffects.filter(
+      (effect) => effect.casterPlayerId !== candidateId,
+    );
+
+    if (candidate.status === 'cornered') {
+      if (candidate.hearts !== 0) {
+        throw new Error(`Cornered player ${candidateId} must have 0 Hearts`);
+      }
+
+      players[candidateId] = {
+        ...candidate,
+        status: 'active',
+        hearts: 1,
+      };
+      firstRecoveredPlayerId ??= candidateId;
+      continue;
+    }
+
+    if (candidate.hearts < 1) {
+      throw new Error(
+        `Active player ${candidateId} must have at least 1 Heart`,
+      );
+    }
+
+    nextPlayerId = candidateId;
+    break;
+  }
+
+  nextPlayerId ??= firstRecoveredPlayerId;
+  if (nextPlayerId === null) {
+    throw new EngineError(
+      'NO_ELIGIBLE_PLAYER',
+      'No surviving player can take the next turn',
+    );
+  }
+
+  return matchStateSchema.parse({
+    ...state,
+    phase: 'turn_start',
+    version: state.version + 1,
+    actionsRemaining: 0,
+    attacksUsedThisTurn: 0,
+    suspicionAwardedForDamageThisTurn: false,
+    investigationTargetsThisTurn: [],
+    currentPlayerId: nextPlayerId,
+    deadlineUtc: null,
+    pendingAttack: null,
+    pendingCardEffect: null,
+    pendingCornered: null,
+    pendingSecretFinish: null,
+    players,
+    activeEffects,
+  });
+}

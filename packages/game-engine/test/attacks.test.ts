@@ -22,6 +22,7 @@ const fixturePath = fileURLToPath(
 const fixture = turnStartFixtureSchema.parse(
   JSON.parse(readFileSync(fixturePath, 'utf8')),
 );
+const FIXED_NOW_MS = Date.UTC(2026, 10, 17);
 
 function activeState(
   hands: Record<string, string[]> = {},
@@ -59,9 +60,12 @@ function passAllReactions(state: MatchState): MatchState {
       throw new Error('Pending attack must have an eligible responder');
     }
 
-    nextState = respondToAttack(nextState, responderPlayerId, {
-      kind: 'pass',
-    });
+    nextState = respondToAttack(
+      nextState,
+      responderPlayerId,
+      { kind: 'pass' },
+      FIXED_NOW_MS,
+    );
   }
 
   return nextState;
@@ -304,7 +308,35 @@ describe('attacks and reactions', () => {
   });
 
   it('enters Cornered after the successful damage and preserves attack context', () => {
-    const state = activeState({ 'player-1': ['card_04:1'] }, { 'player-2': 1 });
+    const active = activeState(
+      { 'player-1': ['card_04:1'] },
+      { 'player-2': 1 },
+    );
+    const state = matchStateSchema.parse({
+      ...active,
+      players: {
+        ...active.players,
+        'player-1': {
+          ...active.players['player-1'],
+          role: 'impostor',
+        },
+        'player-2': {
+          ...active.players['player-2'],
+          role: 'innocent',
+        },
+        'player-3': {
+          ...active.players['player-3'],
+          role: 'innocent',
+          evidence: {
+            'player-2': { clue: true, behavior: true },
+          },
+        },
+        'player-4': {
+          ...active.players['player-4'],
+          role: 'innocent',
+        },
+      },
+    });
     const cornered = passAllReactions(
       startAttack(state, 'player-1', 'player-2', 'card_04:1'),
     );
@@ -316,7 +348,13 @@ describe('attacks and reactions', () => {
       attackerPlayerId: 'player-1',
       targetPlayerId: 'player-2',
       attackCardInstanceId: 'card_04:1',
+      accusationOrderPlayerIds: ['player-3'],
+      accusationIndex: 0,
+      secretFinishResolved: false,
     });
+    expect(cornered.deadlineUtc).toBe(
+      new Date(FIXED_NOW_MS + 10_000).toISOString(),
+    );
     expect(cornered.pendingAttack).toBeNull();
     expect(cornered.publicActionHistory).toEqual([
       { playerId: 'player-1', kind: 'successful_attack' },

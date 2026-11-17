@@ -33,7 +33,7 @@ Keep admin APIs separate; never expose a public match-state dump.
 }
 ```
 
-Other candidate commands: `READY`, `START_MATCH`, `END_TURN`, `PLAY_REACTION`, `BASIC_OBSERVE`, `PASS_REACTION`, `PASS_ACCUSATION`, `ACCUSE`, `SECRET_FINISH`, `PASS_SECRET_FINISH`, `RESUME`. Commands must be validated against exact phases, ownership, ability and limits.
+Other candidate commands: `READY`, `START_MATCH`, `END_TURN`, `PLAY_REACTION`, `BASIC_OBSERVE`, `PASS_REACTION`, `PASS_ACCUSATION`, `ACCUSE`, `SECRET_FINISH`, `PASS_SECRET_FINISH`, `PASS_LAST_CHANCE`, `RESUME`. Commands must be validated against exact phases, ownership, ability and limits.
 
 ## Server → Client events
 
@@ -49,7 +49,8 @@ Match: matchId, rulesVersion, catalogVersion, phase, version,
   deck[instanceIds], discard[instanceIds], roles[playerId],
   hands[playerId], hearts[playerId], suspicion[playerId],
   evidence[investigatorId][suspectId]{clue,behavior},
-  activeEffects[], accusationUsed[playerId], winner?,
+  activeEffects[], accusationUsed[playerId], pendingCornered?,
+  pendingSecretFinish?, winner?,
   eventLog[], processedCommandIds[], createdAt, updatedAt
 ```
 
@@ -82,5 +83,11 @@ Write actual machine-readable fixtures during M0–M1; text examples are intenti
 ## Secret Finish privacy and command handling (protocol v2)
 
 After all eligible 10-second accusation offers pass, open a sealed secret-finish window. Eligible Active room members submit exactly one authenticated `SECRET_FINISH` (Impostor only) or `PASS_SECRET_FINISH` (everyone else). **Do not broadcast who selected either choice, and do not broadcast incoming selections as they happen**. Buffer private submissions until everyone has decided or a short configured timer ends. An Active Impostor can submit FINISH even if it's another player's turn; a Cornered Impostor cannot. Nonresponders pass. Finishing costs zero turn actions and is allowed once per Cornered event, not once per turn. Persist participant choices securely (never include them in per-player or public projections), then commit elimination privately and broadcast only victim status and role. `SECRET_FINISH_RESOLVED` must not include actor ID, and player-facing action history must not expose it. An Invalid Innocent FINISH command receives a generic rejection but must not expose the Impostor's identity. Reconnect during the sealed window must not disclose other choices.
+
+The pure engine stores the accusation offer order and sealed submissions in private pending state. It accepts a trusted epoch-millisecond timestamp from its caller to set/check `deadlineUtc`; each accusation offer lasts 10 seconds, and the Secret Finish window uses the approved 10-second implementation parameter. The engine rejects late submissions and exposes explicit expiry transitions; nonresponses become passes. Never send `pendingSecretFinish.submissions` to clients.
+
+**Projection requirement for M1-13/M3:** The engine skips Secret Finish for an Impostor target, as required by the rules. Exposing that phase transition or its timing directly would reveal the target's hidden role. The online protocol must mask this distinction without offering an actual finish against an Impostor; this privacy behavior is not yet implemented.
+
+If no accusation or Secret Finish eliminates the Cornered target and they hold Last Chance, offer it to that target. Playing it costs no action, discards the card, and restores them to one Heart; passing leaves them Cornered and resumes the interrupted turn. If an incorrect accusation eliminated the interrupted turn owner, advance to the next scheduled turn instead.
 
 **Terminal state:** sole non-eliminated Impostor wins even while Cornered; a surviving Cornered Innocent blocks immediate Impostor victory. Impostor permanent forfeit ends `CANCELLED_NO_WINNER`; disconnection alone does not forfeit.

@@ -26,6 +26,7 @@ export const matchPhaseSchema = z.enum([
   'awaiting_reaction',
   'awaiting_accusation',
   'awaiting_secret_finish',
+  'awaiting_last_chance',
   'finished',
   'archived',
   'cancelled',
@@ -110,6 +111,17 @@ const pendingCorneredSchema = z
     attackerPlayerId: z.string().min(1),
     targetPlayerId: z.string().min(1),
     attackCardInstanceId: z.string().min(1),
+    accusationOrderPlayerIds: z.array(z.string().min(1)).default([]),
+    accusationIndex: z.number().int().min(0).default(0),
+    secretFinishResolved: z.boolean().default(false),
+  })
+  .strict();
+
+const pendingSecretFinishSchema = z
+  .object({
+    targetPlayerId: z.string().min(1),
+    eligiblePlayerIds: z.array(z.string().min(1)),
+    submissions: z.record(z.string(), z.enum(['finish', 'pass'])),
   })
   .strict();
 
@@ -133,6 +145,7 @@ export const matchStateSchema = z
     pendingAttack: pendingAttackSchema.nullable().default(null),
     pendingCardEffect: pendingCardEffectSchema.nullable().default(null),
     pendingCornered: pendingCorneredSchema.nullable().default(null),
+    pendingSecretFinish: pendingSecretFinishSchema.nullable().default(null),
     seatOrder: z.array(z.string().min(1)).min(4).max(8),
     deadlineUtc: z.string().datetime().nullable(),
     players: z.record(z.string(), playerStateSchema),
@@ -155,5 +168,6 @@ export type ActiveEffect = z.infer<typeof activeEffectSchema>;
 export type PendingAttack = z.infer<typeof pendingAttackSchema>;
 export type PendingCardEffect = z.infer<typeof pendingCardEffectSchema>;
 export type PendingCornered = z.infer<typeof pendingCorneredSchema>;
+export type PendingSecretFinish = z.infer<typeof pendingSecretFinishSchema>;
 export type MatchOutcome = z.infer<typeof matchOutcomeSchema>;
 export type MatchState = z.infer<typeof matchStateSchema>;

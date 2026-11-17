@@ -41,7 +41,7 @@ Two runtimes are a deliberate trade-off: TypeScript authoritative online and Dar
 
 ## Room lifecycle
 
-`created → lobby → ready_check → dealing → active_turn → awaiting_reaction → awaiting_accusation → awaiting_secret_finish → finished → archived`.
+`created → lobby → ready_check → dealing → active_turn → awaiting_reaction → awaiting_accusation → awaiting_secret_finish → awaiting_last_chance → active_turn/turn_start → finished → archived`.
 
 Room storage persists event IDs, public/private state, deadlines, roles/deck order, reconnect credential hashes, and version. Use DO alarms/deadlines, not permanent timers, to support hibernation. On reconnect reauthenticate and send a per-player snapshot. Socket attachments should contain only minimal safe metadata to recover after hibernation.
 

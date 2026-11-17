@@ -18,6 +18,12 @@ export const engineErrorCodes = [
   'INVALID_INSPECTION_DEFENSE',
   'INVALID_REACTION',
   'SAFE_PLACE_ALREADY_ACTIVE',
+  'INVALID_DEADLINE',
+  'WINDOW_EXPIRED',
+  'WINDOW_NOT_EXPIRED',
+  'INVALID_ACCUSATION',
+  'INVALID_SECRET_FINISH',
+  'NO_ELIGIBLE_PLAYER',
 ] as const;
 
 export type EngineErrorCode = (typeof engineErrorCodes)[number];
