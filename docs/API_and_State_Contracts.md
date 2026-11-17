@@ -70,19 +70,11 @@ Use cryptographically secure random IDs and expiring signed credentials; store s
 
 ## Cross-engine golden fixture format
 
-```json
-{
-  "fixtureVersion": 1,
-  "rulesVersion": "2.1.0",
-  "name": "wrong-accusation-eliminates-both",
-  "initialState": "test-data fixture object",
-  "command": "accuse suspect",
-  "expectedPublicDelta": "two innocent players eliminated",
-  "expectedPrivateDelta": "roles revealed only as rules allow"
-}
-```
+Version 1 fixtures contain complete initial and expected states for setup and turn transitions. Version 2 uses [`m1-gameplay-scenarios.json`](../shared/fixtures/m1-gameplay-scenarios.json): a complete `baseState` and named scenarios with `initialState` overrides, ordered `steps`, and `expectedState`. Merge overrides into the base at the top level and merge each specified player field into that base player; other objects and arrays replace the base value. Validate the merged state before executing.
 
-Write actual machine-readable fixtures during M0–M1; text examples are intentional placeholders, not implementation-ready JSON fixtures.
+Each step specifies a typed `command`; random inputs are explicit sequences of values in `[0, 1)`, and `nowMs` values are epoch milliseconds. Implementations must consume random values in order and fail if the sequence is exhausted. An `expectedError` requires the specified error code and no state mutation. Otherwise the command succeeds; optional `expectedResult`, `expectedPublic`, and per-player `expectedPrivate` compare the specified fields recursively. `absentPublicPaths` lists dot-separated properties that must not exist. `expectedState` similarly compares specified fields after all steps; arrays compare in order and length. Fields not specified in these expectations are not checked. The versioned command schemas and the TypeScript execution adapter are in [`golden-fixture.ts`](../packages/game-engine/src/golden-fixture.ts) and [`scenario-fixtures.test.ts`](../packages/game-engine/test/scenario-fixtures.test.ts); Dart must implement the same semantics rather than derive expected results from its own engine.
+
+The TypeScript adapter checks that successful commands exercise all 24 catalog designs, that rejected commands do not mutate input, and that serialized accepted transitions replay to the final authoritative state. Fixtures contain synthetic private state and are test data, not a wire protocol or proof of M3 transport security.
 
 ## Secret Finish privacy and command handling (protocol v2)
 

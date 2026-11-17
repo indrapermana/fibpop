@@ -1,0 +1,1630 @@
+{
+  "fixtureVersion": 2,
+  "rulesVersion": "2.1.0",
+  "catalogVersion": "1.0.0",
+  "name": "m1-gameplay-scenarios",
+  "baseState": {
+    "matchId": "golden-gameplay",
+    "rulesVersion": "2.1.0",
+    "catalogVersion": "1.0.0",
+    "phase": "active_turn",
+    "version": 0,
+    "actionsRemaining": 2,
+    "attacksUsedThisTurn": 0,
+    "suspicionAwardedForDamageThisTurn": false,
+    "investigationTargetsThisTurn": [],
+    "currentPlayerId": "player-1",
+    "pendingAttack": null,
+    "pendingCardEffect": null,
+    "pendingCornered": null,
+    "pendingSecretFinish": null,
+    "seatOrder": ["player-1", "player-2", "player-3", "player-4"],
+    "deadlineUtc": null,
+    "players": {
+      "player-1": {
+        "playerId": "player-1",
+        "role": "innocent",
+        "status": "active",
+        "hearts": 3,
+        "suspicion": 0,
+        "hand": [],
+        "evidence": {},
+        "lastPlayedActionCardInstanceId": null,
+        "accusationUsed": false
+      },
+      "player-2": {
+        "playerId": "player-2",
+        "role": "innocent",
+        "status": "active",
+        "hearts": 3,
+        "suspicion": 0,
+        "hand": [],
+        "evidence": {},
+        "lastPlayedActionCardInstanceId": null,
+        "accusationUsed": false
+      },
+      "player-3": {
+        "playerId": "player-3",
+        "role": "innocent",
+        "status": "active",
+        "hearts": 3,
+        "suspicion": 0,
+        "hand": [],
+        "evidence": {},
+        "lastPlayedActionCardInstanceId": null,
+        "accusationUsed": false
+      },
+      "player-4": {
+        "playerId": "player-4",
+        "role": "impostor",
+        "status": "active",
+        "hearts": 3,
+        "suspicion": 0,
+        "hand": [],
+        "evidence": {},
+        "lastPlayedActionCardInstanceId": null,
+        "accusationUsed": false
+      }
+    },
+    "drawPile": [],
+    "discardPile": [],
+    "publicActionHistory": [],
+    "activeEffects": [],
+    "accusationUsed": [],
+    "winner": null
+  },
+  "scenarios": [
+    {
+      "name": "attack-damage",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_01:1"] },
+          "player-2": { "hearts": 2 }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_01:1"
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-2",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-3",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-4",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-1",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        }
+      ],
+      "expectedState": {
+        "phase": "active_turn",
+        "actionsRemaining": 1,
+        "attacksUsedThisTurn": 1,
+        "players": {
+          "player-1": { "suspicion": 1 },
+          "player-2": { "hearts": 1 }
+        },
+        "publicActionHistory": [
+          { "playerId": "player-1", "kind": "successful_attack" }
+        ]
+      }
+    },
+    {
+      "name": "double-down-discard",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_02:1"] },
+          "player-2": { "hand": ["card_09:1"] }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_02:1"
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-2",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          },
+          "expectedError": "INVALID_DISCARD"
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-2",
+            "response": {
+              "kind": "pass",
+              "discardCardInstanceId": "card_09:1"
+            },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-3",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-4",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-1",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        }
+      ],
+      "expectedState": {
+        "players": { "player-2": { "hearts": 2, "hand": [] } },
+        "discardPile": ["card_02:1", "card_09:1"]
+      }
+    },
+    {
+      "name": "callout-reveals-action",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_03:1"] },
+          "player-2": { "lastPlayedActionCardInstanceId": "card_14:1" }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_03:1"
+          },
+          "expectedPublic": {
+            "attack": { "calloutRevealedActionCardInstanceId": "card_14:1" }
+          }
+        }
+      ],
+      "expectedState": {
+        "phase": "awaiting_reaction",
+        "discardPile": ["card_03:1"]
+      }
+    },
+    {
+      "name": "corner-them-evidence-even-if-blocked",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_04:1"] },
+          "player-2": { "hand": ["card_05:1"], "suspicion": 2 }
+        },
+        "publicActionHistory": [
+          { "playerId": "player-2", "kind": "noisy_manipulation" }
+        ]
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_04:1"
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-2",
+            "response": { "kind": "defend", "cardInstanceId": "card_05:1" },
+            "nowMs": 0
+          }
+        }
+      ],
+      "expectedState": {
+        "phase": "active_turn",
+        "players": {
+          "player-1": {
+            "evidence": { "player-2": { "clue": false, "behavior": true } }
+          },
+          "player-2": { "hearts": 3 }
+        },
+        "discardPile": ["card_04:1", "card_05:1"]
+      }
+    },
+    {
+      "name": "deny-it",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_01:1"] },
+          "player-2": { "hand": ["card_06:1"], "suspicion": 2 }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_01:1"
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-2",
+            "response": { "kind": "defend", "cardInstanceId": "card_06:1" },
+            "nowMs": 0
+          }
+        }
+      ],
+      "expectedState": {
+        "phase": "active_turn",
+        "players": { "player-2": { "hearts": 3, "suspicion": 1, "hand": [] } },
+        "discardPile": ["card_01:1", "card_06:1"]
+      }
+    },
+    {
+      "name": "step-in-after-target",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_01:1"] },
+          "player-3": { "hand": ["card_07:1"] }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_01:1"
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-3",
+            "response": { "kind": "step_in", "cardInstanceId": "card_07:1" },
+            "nowMs": 0
+          },
+          "expectedError": "NOT_YOUR_TURN"
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-2",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-3",
+            "response": { "kind": "step_in", "cardInstanceId": "card_07:1" },
+            "nowMs": 0
+          }
+        }
+      ],
+      "expectedState": {
+        "phase": "active_turn",
+        "players": { "player-2": { "hearts": 3 }, "player-3": { "hand": [] } },
+        "discardPile": ["card_01:1", "card_07:1"]
+      }
+    },
+    {
+      "name": "countercheck-behavior-evidence",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_01:1"] },
+          "player-2": { "hand": ["card_08:1"] }
+        },
+        "publicActionHistory": [
+          { "playerId": "player-1", "kind": "noisy_manipulation" }
+        ]
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_01:1"
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-2",
+            "response": { "kind": "defend", "cardInstanceId": "card_08:1" },
+            "nowMs": 0
+          }
+        }
+      ],
+      "expectedState": {
+        "players": {
+          "player-2": {
+            "hearts": 3,
+            "evidence": { "player-1": { "clue": false, "behavior": true } }
+          }
+        },
+        "discardPile": ["card_01:1", "card_08:1"]
+      }
+    },
+    {
+      "name": "look-back-behavior",
+      "initialState": {
+        "players": { "player-1": { "hand": ["card_09:1"] } },
+        "publicActionHistory": [
+          { "playerId": "player-2", "kind": "successful_attack" }
+        ]
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "INVESTIGATE",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_09:1",
+            "randomSequence": []
+          },
+          "expectedResult": { "actionCost": 1, "evidenceAdded": true }
+        }
+      ],
+      "expectedState": {
+        "actionsRemaining": 1,
+        "players": {
+          "player-1": {
+            "evidence": { "player-2": { "clue": false, "behavior": true } }
+          }
+        },
+        "discardPile": ["card_09:1"]
+      }
+    },
+    {
+      "name": "follow-trail-private-inspection",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_10:1"] },
+          "player-2": { "hand": ["card_09:1", "card_11:1"] }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "INVESTIGATE",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_10:1",
+            "randomSequence": [0.75]
+          },
+          "expectedResult": {
+            "evidenceAdded": true,
+            "privateResult": { "inspectedCardInstanceId": "card_11:1" }
+          },
+          "expectedPublic": {
+            "players": { "player-2": { "handCount": 2, "revealedRole": null } }
+          },
+          "absentPublicPaths": [
+            "version",
+            "deadlineUtc",
+            "drawPile",
+            "players.player-2.role",
+            "players.player-2.hand",
+            "players.player-1.evidence"
+          ],
+          "expectedPrivate": {
+            "player-1": {
+              "self": {
+                "role": "innocent",
+                "evidence": { "player-2": { "clue": true, "behavior": false } }
+              }
+            },
+            "player-2": {
+              "self": { "hand": ["card_09:1", "card_11:1"], "evidence": {} }
+            }
+          }
+        }
+      ],
+      "expectedState": {
+        "players": {
+          "player-1": {
+            "evidence": { "player-2": { "clue": true, "behavior": false } }
+          },
+          "player-2": { "hand": ["card_09:1", "card_11:1"] }
+        },
+        "discardPile": ["card_10:1"]
+      }
+    },
+    {
+      "name": "peek-empty-hand",
+      "initialState": {
+        "players": { "player-1": { "hand": ["card_11:1"] } },
+        "drawPile": ["card_09:1"]
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "INVESTIGATE",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_11:1",
+            "randomSequence": []
+          },
+          "expectedResult": {
+            "privateResult": {
+              "inspectedCardInstanceId": null,
+              "drawnCardInstanceId": "card_09:1"
+            }
+          }
+        }
+      ],
+      "expectedState": {
+        "players": { "player-1": { "hand": ["card_09:1"] } },
+        "drawPile": [],
+        "discardPile": ["card_11:1"]
+      }
+    },
+    {
+      "name": "check-alibi",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_12:1"] },
+          "player-2": { "lastPlayedActionCardInstanceId": "card_18:1" }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "INVESTIGATE",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_12:1",
+            "randomSequence": []
+          },
+          "expectedResult": {
+            "evidenceAdded": true,
+            "privateResult": { "revealedActionCardInstanceId": "card_18:1" }
+          }
+        }
+      ],
+      "expectedState": {
+        "players": {
+          "player-1": {
+            "evidence": { "player-2": { "clue": true, "behavior": false } }
+          }
+        },
+        "discardPile": ["card_12:1"]
+      }
+    },
+    {
+      "name": "point-fingers-suspicion-cap",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_13:1"], "suspicion": 2 },
+          "player-2": { "suspicion": 2 }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "PLAY_CARD",
+            "actor": "player-1",
+            "card": "card_13:1",
+            "target": "player-1",
+            "randomSequence": []
+          },
+          "expectedError": "INVALID_TARGET"
+        },
+        {
+          "command": {
+            "type": "PLAY_CARD",
+            "actor": "player-1",
+            "card": "card_13:1",
+            "target": "player-2",
+            "randomSequence": []
+          }
+        }
+      ],
+      "expectedState": {
+        "actionsRemaining": 1,
+        "players": {
+          "player-1": { "suspicion": 3 },
+          "player-2": { "suspicion": 3 }
+        },
+        "publicActionHistory": [
+          { "playerId": "player-1", "kind": "noisy_manipulation" }
+        ]
+      }
+    },
+    {
+      "name": "clean-slate-noisy-order",
+      "initialState": {
+        "players": { "player-1": { "hand": ["card_14:1"], "suspicion": 3 } }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "PLAY_CARD",
+            "actor": "player-1",
+            "card": "card_14:1",
+            "randomSequence": []
+          }
+        }
+      ],
+      "expectedState": {
+        "players": { "player-1": { "suspicion": 2 } },
+        "discardPile": ["card_14:1"],
+        "publicActionHistory": [
+          { "playerId": "player-1", "kind": "noisy_manipulation" }
+        ]
+      }
+    },
+    {
+      "name": "stir-the-pot-clockwise",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_15:1"] },
+          "player-2": { "hand": ["card_09:1"] },
+          "player-4": { "hand": ["card_10:1"] }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "PLAY_CARD",
+            "actor": "player-1",
+            "card": "card_15:1",
+            "targets": ["player-4", "player-2"],
+            "randomSequence": []
+          }
+        },
+        {
+          "command": {
+            "type": "DISCARD",
+            "actor": "player-4",
+            "card": "card_10:1"
+          },
+          "expectedError": "NOT_YOUR_TURN"
+        },
+        {
+          "command": {
+            "type": "DISCARD",
+            "actor": "player-2",
+            "card": "card_09:1"
+          },
+          "expectedResult": { "nextResponderPlayerId": "player-4" }
+        },
+        {
+          "command": {
+            "type": "DISCARD",
+            "actor": "player-4",
+            "card": "card_10:1"
+          },
+          "expectedResult": { "nextResponderPlayerId": null }
+        }
+      ],
+      "expectedState": {
+        "phase": "active_turn",
+        "pendingCardEffect": null,
+        "players": {
+          "player-1": { "suspicion": 1 },
+          "player-2": { "hand": [] },
+          "player-4": { "hand": [] }
+        },
+        "discardPile": ["card_15:1", "card_09:1", "card_10:1"]
+      }
+    },
+    {
+      "name": "card-swap-deterministic",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_16:1", "card_09:1", "card_10:1"] },
+          "player-2": { "hand": ["card_11:1", "card_12:1"] }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "PLAY_CARD",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_16:1",
+            "randomSequence": [0, 0.99]
+          },
+          "expectedResult": {
+            "privateResult": {
+              "givenToTargetCardInstanceId": "card_09:1",
+              "receivedCardInstanceId": "card_12:1"
+            }
+          }
+        }
+      ],
+      "expectedState": {
+        "players": {
+          "player-1": { "hand": ["card_10:1", "card_12:1"] },
+          "player-2": { "hand": ["card_11:1", "card_09:1"] }
+        },
+        "discardPile": ["card_16:1"]
+      }
+    },
+    {
+      "name": "first-aid-revives-cornered",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_17:1"] },
+          "player-2": { "status": "cornered", "hearts": 0 }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "PLAY_CARD",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_17:1",
+            "randomSequence": []
+          }
+        }
+      ],
+      "expectedState": {
+        "players": { "player-2": { "status": "active", "hearts": 1 } },
+        "discardPile": ["card_17:1"]
+      }
+    },
+    {
+      "name": "catch-your-breath-draw-discard",
+      "initialState": {
+        "players": { "player-1": { "hand": ["card_18:1"] } },
+        "drawPile": ["card_09:1", "card_10:1"]
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "PLAY_CARD",
+            "actor": "player-1",
+            "card": "card_18:1",
+            "randomSequence": []
+          },
+          "expectedResult": {
+            "privateResult": {
+              "drawnCardInstanceIds": ["card_10:1", "card_09:1"]
+            }
+          }
+        },
+        {
+          "command": {
+            "type": "DISCARD",
+            "actor": "player-1",
+            "card": "card_09:1"
+          },
+          "expectedResult": { "nextResponderPlayerId": null }
+        }
+      ],
+      "expectedState": {
+        "phase": "active_turn",
+        "pendingCardEffect": null,
+        "players": { "player-1": { "hand": ["card_10:1"] } },
+        "discardPile": ["card_18:1", "card_09:1"]
+      }
+    },
+    {
+      "name": "patch-up",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_20:1"], "hearts": 2, "suspicion": 3 }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "PLAY_CARD",
+            "actor": "player-1",
+            "card": "card_20:1",
+            "randomSequence": []
+          }
+        }
+      ],
+      "expectedState": {
+        "players": { "player-1": { "hearts": 3, "suspicion": 2 } },
+        "discardPile": ["card_20:1"]
+      }
+    },
+    {
+      "name": "safe-place-shield",
+      "initialState": { "players": { "player-1": { "hand": ["card_21:1"] } } },
+      "steps": [
+        {
+          "command": {
+            "type": "PLAY_CARD",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_21:1",
+            "randomSequence": []
+          }
+        }
+      ],
+      "expectedState": {
+        "activeEffects": [
+          {
+            "type": "safe_place",
+            "casterPlayerId": "player-1",
+            "targetPlayerId": "player-2"
+          }
+        ],
+        "discardPile": ["card_21:1"]
+      }
+    },
+    {
+      "name": "extra-clue-target-discard",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_22:1"] },
+          "player-2": { "hand": ["card_09:1", "card_11:1"] }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "INVESTIGATE",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_22:1",
+            "randomSequence": [],
+            "defense": { "kind": "discard", "cardInstanceId": "card_09:1" }
+          },
+          "expectedResult": {
+            "evidenceAdded": true,
+            "privateResult": { "inspectedCardInstanceId": null }
+          }
+        }
+      ],
+      "expectedState": {
+        "players": {
+          "player-1": {
+            "evidence": { "player-2": { "clue": true, "behavior": false } }
+          },
+          "player-2": { "hand": ["card_11:1"] }
+        },
+        "discardPile": ["card_22:1", "card_09:1"]
+      }
+    },
+    {
+      "name": "spotlight-public-suspicion-private-draw",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_23:1"] },
+          "player-2": { "suspicion": 2 }
+        },
+        "drawPile": ["card_09:1"]
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "PLAY_CARD",
+            "actor": "player-1",
+            "card": "card_23:1",
+            "randomSequence": []
+          },
+          "expectedResult": {
+            "publicResult": { "suspicionByPlayerId": { "player-2": 2 } },
+            "privateResult": { "drawnCardInstanceId": "card_09:1" }
+          }
+        }
+      ],
+      "expectedState": {
+        "players": { "player-1": { "hand": ["card_09:1"] } },
+        "drawPile": [],
+        "discardPile": ["card_23:1"]
+      }
+    },
+    {
+      "name": "misdirection-blocks-inspection-not-evidence",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_10:1"] },
+          "player-2": { "hand": ["card_24:1", "card_09:1"] }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "INVESTIGATE",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_10:1",
+            "randomSequence": [],
+            "defense": { "kind": "misdirection", "cardInstanceId": "card_24:1" }
+          },
+          "expectedResult": {
+            "evidenceAdded": true,
+            "privateResult": { "inspectedCardInstanceId": null }
+          }
+        }
+      ],
+      "expectedState": {
+        "players": {
+          "player-1": {
+            "evidence": { "player-2": { "clue": true, "behavior": false } }
+          },
+          "player-2": { "hand": ["card_09:1"] }
+        },
+        "discardPile": ["card_10:1", "card_24:1"]
+      }
+    },
+    {
+      "name": "last-chance-sealed-window",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_01:1"] },
+          "player-2": { "hearts": 1, "hand": ["card_19:1"] }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_01:1"
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-2",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-3",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-4",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-1",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          },
+          "expectedPublic": {
+            "phase": "cornered_resolution",
+            "corneredTargetPlayerId": "player-2"
+          },
+          "expectedPrivate": {
+            "player-1": {
+              "self": {
+                "prompt": {
+                  "kind": "accusation",
+                  "canAccuse": false,
+                  "submitted": false
+                }
+              }
+            }
+          }
+        },
+        {
+          "command": { "type": "EXPIRE_ACCUSATION", "nowMs": 9999 },
+          "expectedError": "WINDOW_NOT_EXPIRED"
+        },
+        { "command": { "type": "EXPIRE_ACCUSATION", "nowMs": 10000 } },
+        { "command": { "type": "EXPIRE_ACCUSATION", "nowMs": 20000 } },
+        {
+          "command": { "type": "EXPIRE_ACCUSATION", "nowMs": 30000 },
+          "expectedPublic": { "phase": "cornered_resolution" },
+          "expectedPrivate": {
+            "player-4": {
+              "self": {
+                "prompt": {
+                  "kind": "secret_choice",
+                  "canFinish": true,
+                  "submitted": false
+                }
+              }
+            }
+          }
+        },
+        {
+          "command": {
+            "type": "SECRET_CHOICE",
+            "actor": "player-1",
+            "choice": "finish",
+            "nowMs": 30001
+          },
+          "expectedError": "NOT_ELIGIBLE"
+        },
+        { "command": { "type": "EXPIRE_SECRET", "nowMs": 40000 } },
+        {
+          "command": {
+            "type": "PLAY_LAST_CHANCE",
+            "actor": "player-2",
+            "card": "card_19:1",
+            "nowMs": 40001
+          },
+          "expectedPublic": {
+            "phase": "cornered_resolution",
+            "players": { "player-2": { "status": "cornered", "handCount": 1 } }
+          },
+          "expectedPrivate": {
+            "player-2": {
+              "self": {
+                "prompt": {
+                  "kind": "last_chance",
+                  "canPlay": true,
+                  "submitted": true
+                }
+              }
+            }
+          }
+        },
+        { "command": { "type": "EXPIRE_LAST_CHANCE", "nowMs": 50000 } }
+      ],
+      "expectedState": {
+        "phase": "active_turn",
+        "players": {
+          "player-2": { "status": "active", "hearts": 1, "hand": [] }
+        },
+        "discardPile": ["card_01:1", "card_19:1"],
+        "winner": null
+      }
+    },
+    {
+      "name": "correct-accusation-wins",
+      "initialState": {
+        "players": {
+          "player-1": {
+            "hand": ["card_01:1"],
+            "evidence": { "player-2": { "clue": true, "behavior": true } }
+          },
+          "player-2": { "hearts": 1, "role": "impostor" },
+          "player-4": { "role": "innocent" }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_01:1"
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-2",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-3",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-4",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-1",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ACCUSE",
+            "actor": "player-1",
+            "response": "accuse",
+            "nowMs": 1
+          }
+        }
+      ],
+      "expectedState": {
+        "phase": "finished",
+        "winner": { "kind": "winner", "playerId": "player-1" },
+        "players": { "player-1": { "accusationUsed": true } },
+        "pendingCornered": null
+      }
+    },
+    {
+      "name": "wrong-accusation-eliminates-both",
+      "initialState": {
+        "players": {
+          "player-1": {
+            "hand": ["card_01:1"],
+            "evidence": { "player-2": { "clue": true, "behavior": true } }
+          },
+          "player-2": { "hearts": 1 }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_01:1"
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-2",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-3",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-4",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-1",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ACCUSE",
+            "actor": "player-1",
+            "response": "accuse",
+            "nowMs": 1
+          }
+        }
+      ],
+      "expectedState": {
+        "phase": "turn_start",
+        "currentPlayerId": "player-3",
+        "players": {
+          "player-1": { "status": "eliminated", "accusationUsed": true },
+          "player-2": { "status": "eliminated" }
+        },
+        "winner": null
+      }
+    },
+    {
+      "name": "secret-finish-remains-sealed-until-expiry",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_01:1"] },
+          "player-2": { "hearts": 1 }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_01:1"
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-2",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-3",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-4",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-1",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        { "command": { "type": "EXPIRE_ACCUSATION", "nowMs": 10000 } },
+        { "command": { "type": "EXPIRE_ACCUSATION", "nowMs": 20000 } },
+        { "command": { "type": "EXPIRE_ACCUSATION", "nowMs": 30000 } },
+        {
+          "command": {
+            "type": "SECRET_CHOICE",
+            "actor": "player-4",
+            "choice": "finish",
+            "nowMs": 30001
+          },
+          "expectedPublic": {
+            "phase": "cornered_resolution",
+            "players": {
+              "player-2": { "status": "cornered" },
+              "player-4": { "revealedRole": null }
+            }
+          },
+          "absentPublicPaths": [
+            "version",
+            "deadlineUtc",
+            "pendingSecretFinish",
+            "pendingCornered",
+            "players.player-4.role"
+          ],
+          "expectedPrivate": {
+            "player-4": {
+              "self": {
+                "prompt": { "kind": "secret_choice", "submitted": true }
+              }
+            },
+            "player-1": {
+              "self": {
+                "prompt": {
+                  "kind": "secret_choice",
+                  "canFinish": false,
+                  "submitted": false
+                }
+              }
+            }
+          }
+        },
+        {
+          "command": { "type": "EXPIRE_SECRET", "nowMs": 39999 },
+          "expectedError": "WINDOW_NOT_EXPIRED"
+        },
+        { "command": { "type": "EXPIRE_SECRET", "nowMs": 40000 } }
+      ],
+      "expectedState": {
+        "phase": "active_turn",
+        "players": { "player-2": { "status": "eliminated" } },
+        "pendingSecretFinish": null,
+        "winner": null
+      }
+    },
+    {
+      "name": "disconnect-does-not-change-state",
+      "initialState": {},
+      "steps": [
+        {
+          "command": {
+            "type": "DEPARTURE",
+            "actor": "player-1",
+            "departure": { "kind": "disconnect" }
+          }
+        }
+      ],
+      "expectedState": {
+        "phase": "active_turn",
+        "version": 0,
+        "players": { "player-1": { "status": "active" } }
+      }
+    },
+    {
+      "name": "impostor-forfeit-cancels",
+      "initialState": {},
+      "steps": [
+        {
+          "command": {
+            "type": "DEPARTURE",
+            "actor": "player-4",
+            "departure": { "kind": "forfeit", "nowMs": 0 }
+          }
+        }
+      ],
+      "expectedState": {
+        "phase": "cancelled",
+        "winner": { "kind": "cancelled_no_winner" },
+        "players": { "player-4": { "status": "eliminated" } }
+      }
+    },
+    {
+      "name": "last-innocent-forfeit-wins",
+      "initialState": {
+        "players": {
+          "player-2": { "status": "eliminated", "hearts": 0 },
+          "player-3": { "status": "eliminated", "hearts": 0 },
+          "player-4": { "status": "cornered", "hearts": 0 }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "DEPARTURE",
+            "actor": "player-1",
+            "departure": { "kind": "forfeit", "nowMs": 0 }
+          }
+        }
+      ],
+      "expectedState": {
+        "phase": "finished",
+        "winner": { "kind": "winner", "playerId": "player-4" },
+        "players": { "player-4": { "status": "cornered", "hearts": 0 } }
+      }
+    },
+    {
+      "name": "attack-target-forfeit-cancels-attack",
+      "initialState": { "players": { "player-1": { "hand": ["card_01:1"] } } },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_01:1"
+          }
+        },
+        {
+          "command": {
+            "type": "DEPARTURE",
+            "actor": "player-2",
+            "departure": { "kind": "forfeit", "nowMs": 0 }
+          }
+        }
+      ],
+      "expectedState": {
+        "phase": "active_turn",
+        "pendingAttack": null,
+        "players": { "player-2": { "status": "eliminated" } },
+        "discardPile": ["card_01:1"]
+      }
+    },
+    {
+      "name": "shield-consumed-by-damage",
+      "initialState": {
+        "players": { "player-1": { "hand": ["card_01:1"] } },
+        "activeEffects": [
+          {
+            "type": "safe_place",
+            "casterPlayerId": "player-4",
+            "targetPlayerId": "player-2"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_01:1"
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-2",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-3",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-4",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-1",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        }
+      ],
+      "expectedState": {
+        "phase": "active_turn",
+        "activeEffects": [],
+        "players": {
+          "player-2": { "hearts": 3 },
+          "player-1": { "suspicion": 0 }
+        },
+        "publicActionHistory": []
+      }
+    },
+    {
+      "name": "first-investigation-at-three-suspicion-is-free",
+      "initialState": {
+        "players": {
+          "player-1": { "hand": ["card_09:1", "card_09:2"] },
+          "player-2": { "suspicion": 3 }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "INVESTIGATE",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_09:1",
+            "randomSequence": []
+          },
+          "expectedResult": { "actionCost": 0 }
+        },
+        {
+          "command": {
+            "type": "INVESTIGATE",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_09:2",
+            "randomSequence": []
+          },
+          "expectedResult": { "actionCost": 1 }
+        }
+      ],
+      "expectedState": {
+        "actionsRemaining": 1,
+        "investigationTargetsThisTurn": ["player-2"],
+        "discardPile": ["card_09:1", "card_09:2"]
+      }
+    },
+    {
+      "name": "end-turn-recovers-skipped-cornered-player",
+      "initialState": {
+        "players": { "player-2": { "status": "cornered", "hearts": 0 } },
+        "drawPile": ["card_09:1", "card_10:1"]
+      },
+      "steps": [
+        {
+          "command": { "type": "END_TURN", "discards": ["card_09:1"] },
+          "expectedError": "INVALID_DISCARD_COUNT"
+        },
+        { "command": { "type": "END_TURN", "discards": [] } },
+        { "command": { "type": "BEGIN_TURN", "randomSequence": [] } }
+      ],
+      "expectedState": {
+        "phase": "active_turn",
+        "currentPlayerId": "player-3",
+        "actionsRemaining": 2,
+        "players": {
+          "player-2": { "status": "active", "hearts": 1 },
+          "player-3": { "hand": ["card_10:1", "card_09:1"] }
+        },
+        "drawPile": []
+      }
+    },
+    {
+      "name": "wrong-accusation-final-innocents",
+      "initialState": {
+        "players": {
+          "player-1": {
+            "hand": ["card_01:1"],
+            "evidence": { "player-2": { "clue": true, "behavior": true } }
+          },
+          "player-2": { "hearts": 1 },
+          "player-3": { "role": "impostor" },
+          "player-4": {
+            "role": "innocent",
+            "status": "eliminated",
+            "hearts": 0
+          }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_01:1"
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-2",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-3",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-1",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ACCUSE",
+            "actor": "player-1",
+            "response": "accuse",
+            "nowMs": 1
+          }
+        }
+      ],
+      "expectedState": {
+        "phase": "finished",
+        "winner": { "kind": "winner", "playerId": "player-3" },
+        "players": {
+          "player-1": { "status": "eliminated" },
+          "player-2": { "status": "eliminated" }
+        }
+      }
+    },
+    {
+      "name": "secret-finish-final-innocent",
+      "initialState": {
+        "players": {
+          "player-1": { "role": "impostor", "hand": ["card_01:1"] },
+          "player-2": { "hearts": 1 },
+          "player-3": { "status": "eliminated", "hearts": 0 },
+          "player-4": {
+            "role": "innocent",
+            "status": "eliminated",
+            "hearts": 0
+          }
+        }
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "ATTACK",
+            "actor": "player-1",
+            "target": "player-2",
+            "card": "card_01:1"
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-2",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        {
+          "command": {
+            "type": "ATTACK_RESPONSE",
+            "actor": "player-1",
+            "response": { "kind": "pass" },
+            "nowMs": 0
+          }
+        },
+        { "command": { "type": "EXPIRE_ACCUSATION", "nowMs": 10000 } },
+        {
+          "command": {
+            "type": "SECRET_CHOICE",
+            "actor": "player-1",
+            "choice": "finish",
+            "nowMs": 10001
+          }
+        },
+        { "command": { "type": "EXPIRE_SECRET", "nowMs": 20000 } }
+      ],
+      "expectedState": {
+        "phase": "finished",
+        "winner": { "kind": "winner", "playerId": "player-1" },
+        "players": { "player-2": { "status": "eliminated" } },
+        "pendingSecretFinish": null
+      }
+    },
+    {
+      "name": "basic-observe-qualifying-history",
+      "initialState": {
+        "publicActionHistory": [
+          { "playerId": "player-2", "kind": "successful_attack" }
+        ]
+      },
+      "steps": [
+        {
+          "command": {
+            "type": "BASIC_OBSERVE",
+            "actor": "player-1",
+            "target": "player-2"
+          },
+          "expectedResult": { "evidenceAdded": true }
+        }
+      ],
+      "expectedState": {
+        "actionsRemaining": 1,
+        "players": {
+          "player-1": {
+            "evidence": { "player-2": { "clue": false, "behavior": true } }
+          }
+        }
+      }
+    }
+  ]
+}
