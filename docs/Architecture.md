@@ -30,10 +30,11 @@ flowchart TB
 
 - Worker authenticates a signed, expiring guest session; client-supplied `playerId` is never trusted for ownership.
 - Only one GameRoom instance owns and serializes moves for that match. Server shuffles cards/roles with secure RNG, not a client seed; game event log contains non-public payloads and is never returned wholesale.
-- **Public projection:** player order, public hearts/suspicion, card counts, visible effects, phases, timers, current player.
+- **Public projection:** player order, public hearts/suspicion, card counts, visible effects, current player, and generalized Cornered phase. Sensitive window deadlines and internal match versions are not public.
 - **Private projection:** own hand, own role, own Evidence targets, private prompts.
 - **Never sent:** opponents' hands/roles, deck order, hidden random state, unearned Evidence.
 - All game actions: type validated, actor authorized, phase/turn validated, card ownership checked, state version checked, idempotency key checked, committed before client acknowledgement.
+- Engine transition events contain private state, including sealed choices. Never send or log them in plaintext; the room must encrypt sensitive event persistence and restrict decryption before implementing durable replay.
 
 ## Offline consistency
 

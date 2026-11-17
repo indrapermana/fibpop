@@ -1,5 +1,8 @@
 import { currentAttackResponder, respondToAttack } from './attacks.js';
 import {
+  ACCUSATION_OFFER_MS,
+  LAST_CHANCE_WINDOW_MS,
+  SECRET_FINISH_WINDOW_MS,
   currentAccusationPlayerId,
   removeSecretFinishParticipant,
   respondToAccusation,
@@ -70,6 +73,20 @@ export function handlePlayerDeparture(
       'WINDOW_EXPIRED',
       'Resolve the expired window before the forfeit',
     );
+  }
+  if (state.deadlineUtc !== null) {
+    const duration =
+      state.phase === 'awaiting_accusation'
+        ? ACCUSATION_OFFER_MS
+        : state.phase === 'awaiting_secret_finish'
+          ? SECRET_FINISH_WINDOW_MS
+          : LAST_CHANCE_WINDOW_MS;
+    if (departure.nowMs < Date.parse(state.deadlineUtc) - duration) {
+      throw new EngineError(
+        'INVALID_DEADLINE',
+        'The timestamp precedes the response window',
+      );
+    }
   }
 
   const updated = matchStateSchema.parse({
@@ -171,7 +188,10 @@ export function handlePlayerDeparture(
         ...updated,
         pendingCornered: { ...pending, accusationOrderPlayerIds },
       });
-      if (currentAccusationPlayerId(state) === playerId) {
+      if (
+        currentAccusationPlayerId(state) === playerId &&
+        !pending.accusationPassed
+      ) {
         result = respondToAccusation(
           result,
           playerId,

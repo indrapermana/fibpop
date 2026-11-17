@@ -7,6 +7,7 @@ import {
   currentAccusationPlayerId,
   currentLastChancePlayerId,
   expireAccusationOffer,
+  expireLastChanceWindow,
   expireSecretFinishWindow,
   beginCorneredResolution,
   passLastChance,
@@ -45,6 +46,20 @@ interface CorneredStateOptions {
   hands?: Record<string, string[]>;
   roles?: Record<string, PlayerRole>;
   accusationUsed?: string[];
+  keepCoverSlots?: boolean;
+}
+
+function deadline(state: MatchState): number {
+  if (!state.deadlineUtc) throw new Error('Expected a deadline');
+  return Date.parse(state.deadlineUtc);
+}
+
+function finishAccusationSlots(state: MatchState): MatchState {
+  let next = state;
+  while (next.phase === 'awaiting_accusation') {
+    next = expireAccusationOffer(next, deadline(next));
+  }
+  return next;
 }
 
 function createCorneredState(options: CorneredStateOptions = {}): MatchState {
@@ -111,7 +126,9 @@ function createCorneredState(options: CorneredStateOptions = {}): MatchState {
     );
   }
 
-  return attack;
+  return eligibleAccuserIds.size === 0 && !options.keepCoverSlots
+    ? finishAccusationSlots(attack)
+    : attack;
 }
 
 describe('Cornered resolution', () => {
@@ -124,20 +141,23 @@ describe('Cornered resolution', () => {
     expect(state.pendingCornered?.accusationOrderPlayerIds).toEqual([
       'player-1',
       'player-3',
+      'player-4',
     ]);
     expect(currentAccusationPlayerId(state)).toBe('player-1');
     expect(state.deadlineUtc).toBe(new Date(NOW_MS + 10_000).toISOString());
   });
 
-  it('starts with the next clockwise eligible player when the attacker is not eligible', () => {
+  it('pads the attacker slot before the next eligible player', () => {
     const state = createCorneredState({
       eligibleAccuserIds: ['player-3', 'player-4'],
     });
 
-    expect(state.pendingCornered?.accusationOrderPlayerIds).toEqual([
-      'player-3',
-    ]);
-    expect(currentAccusationPlayerId(state)).toBe('player-3');
+    expect(currentAccusationPlayerId(state)).toBe('player-1');
+    expect(() =>
+      respondToAccusation(state, 'player-1', { kind: 'accuse' }, NOW_MS + 1),
+    ).toThrow(/not eligible/);
+    const next = expireAccusationOffer(state, deadline(state));
+    expect(currentAccusationPlayerId(next)).toBe('player-3');
   });
 
   it('does not offer an accusation to a player who already used theirs', () => {
@@ -146,17 +166,32 @@ describe('Cornered resolution', () => {
       accusationUsed: ['player-1'],
     });
 
-    expect(state.pendingCornered?.accusationOrderPlayerIds).toEqual([
-      'player-3',
-    ]);
-    expect(currentAccusationPlayerId(state)).toBe('player-3');
+    expect(() =>
+      respondToAccusation(state, 'player-1', { kind: 'accuse' }, NOW_MS + 1),
+    ).toThrow(/not eligible/);
+    expect(
+      currentAccusationPlayerId(expireAccusationOffer(state, deadline(state))),
+    ).toBe('player-3');
   });
 
-  it('skips the accusation queue when nobody is eligible', () => {
-    const state = createCorneredState({ eligibleAccuserIds: [] });
+  it('uses cover slots even when nobody is eligible', () => {
+    const cover = createCorneredState({
+      eligibleAccuserIds: [],
+      keepCoverSlots: true,
+    });
+    expect(cover.pendingCornered?.accusationOrderPlayerIds).toEqual([
+      'player-1',
+      'player-3',
+      'player-4',
+    ]);
+    const state = finishAccusationSlots(cover);
 
     expect(state.phase).toBe('awaiting_secret_finish');
-    expect(state.pendingCornered?.accusationOrderPlayerIds).toEqual([]);
+    expect(state.pendingCornered?.accusationOrderPlayerIds).toEqual([
+      'player-1',
+      'player-3',
+      'player-4',
+    ]);
     expect(state.pendingCornered?.secretFinishResolved).toBe(false);
     expect(state.pendingSecretFinish?.eligiblePlayerIds).toEqual([
       'player-1',
@@ -192,6 +227,28 @@ describe('Cornered resolution', () => {
       new Date(deadline + 10_000).toISOString(),
     );
     expect(nextOffer.players['player-1'].accusationUsed).toBe(false);
+  });
+
+  it('keeps an early pass sealed until the slot deadline and rejects duplicate responses', () => {
+    const state = createCorneredState();
+    const passed = respondToAccusation(
+      state,
+      'player-1',
+      { kind: 'pass' },
+      NOW_MS + 1,
+    );
+    expect(currentAccusationPlayerId(passed)).toBe('player-1');
+    expect(() =>
+      respondToAccusation(passed, 'player-1', { kind: 'accuse' }, NOW_MS + 2),
+    ).toThrow(/already submitted/);
+    expect(() => expireAccusationOffer(passed, deadline(passed) - 1)).toThrow(
+      /not expired/,
+    );
+    expect(
+      currentAccusationPlayerId(
+        expireAccusationOffer(passed, deadline(passed)),
+      ),
+    ).toBe('player-3');
   });
 
   it('rejects an invalid accusation response kind', () => {
@@ -298,20 +355,23 @@ describe('Cornered resolution', () => {
     );
     expect(firstPass.phase).toBe('awaiting_accusation');
 
+    const secondOffer = expireAccusationOffer(firstPass, deadline(firstPass));
     const lastPass = respondToAccusation(
-      firstPass,
+      secondOffer,
       'player-3',
       { kind: 'pass' },
-      NOW_MS + 2,
+      NOW_MS + 10_001,
     );
-    expect(lastPass.phase).toBe('awaiting_secret_finish');
-    expect(lastPass.pendingSecretFinish?.eligiblePlayerIds).toEqual([
+    expect(lastPass.phase).toBe('awaiting_accusation');
+    const finishedSlots = finishAccusationSlots(lastPass);
+    expect(finishedSlots.phase).toBe('awaiting_secret_finish');
+    expect(finishedSlots.pendingSecretFinish?.eligiblePlayerIds).toEqual([
       'player-1',
       'player-3',
       'player-4',
     ]);
-    expect(lastPass.deadlineUtc).toBe(
-      new Date(NOW_MS + 2 + 10_000).toISOString(),
+    expect(finishedSlots.deadlineUtc).toBe(
+      new Date(NOW_MS + 40_000).toISOString(),
     );
   });
 
@@ -323,7 +383,12 @@ describe('Cornered resolution', () => {
     const original = structuredClone(state);
 
     expect(() =>
-      submitSecretFinishChoice(state, 'player-1', 'finish', NOW_MS + 1),
+      submitSecretFinishChoice(
+        state,
+        'player-1',
+        'finish',
+        deadline(state) - 9_999,
+      ),
     ).toThrow(/not valid for this player/);
     expect(state).toEqual(original);
   });
@@ -332,12 +397,17 @@ describe('Cornered resolution', () => {
     const state = createCorneredState({ eligibleAccuserIds: [] });
 
     expect(() =>
-      // @ts-expect-error Exercise malformed runtime input at the engine boundary.
-      submitSecretFinishChoice(state, 'player-1', 'invalid', NOW_MS + 1),
+      submitSecretFinishChoice(
+        state,
+        'player-1',
+        // @ts-expect-error Exercise malformed runtime input at the engine boundary.
+        'invalid',
+        deadline(state) - 9_999,
+      ),
     ).toThrow(/must be finish or pass/);
   });
 
-  it('applies an authorized Secret Finish after all choices arrive without revealing its actor', () => {
+  it('buffers an authorized Secret Finish until the deadline without revealing its actor', () => {
     const state = createCorneredState({
       eligibleAccuserIds: [],
     });
@@ -345,20 +415,23 @@ describe('Cornered resolution', () => {
       state,
       'player-1',
       'pass',
-      NOW_MS + 1,
+      deadline(state) - 9_999,
     );
     const secondPass = submitSecretFinishChoice(
       firstPass,
       'player-3',
       'pass',
-      NOW_MS + 2,
+      deadline(state) - 9_998,
     );
-    const finished = submitSecretFinishChoice(
+    const submitted = submitSecretFinishChoice(
       secondPass,
       'player-4',
       'finish',
-      NOW_MS + 3,
+      deadline(state) - 9_997,
     );
+    expect(submitted.phase).toBe('awaiting_secret_finish');
+    expect(submitted.players['player-2'].status).toBe('cornered');
+    const finished = expireSecretFinishWindow(submitted, deadline(submitted));
 
     expect(finished.players['player-2'].status).toBe('eliminated');
     expect(finished.phase).toBe('active_turn');
@@ -374,12 +447,13 @@ describe('Cornered resolution', () => {
       eliminatedPlayerIds: ['player-3', 'player-4'],
       roles: { 'player-1': 'impostor', 'player-4': 'innocent' },
     });
-    const finished = submitSecretFinishChoice(
+    const submitted = submitSecretFinishChoice(
       state,
       'player-1',
       'finish',
-      NOW_MS + 1,
+      deadline(state) - 9_999,
     );
+    const finished = expireSecretFinishWindow(submitted, deadline(submitted));
 
     expect(finished.players['player-2'].status).toBe('eliminated');
     expect(finished.phase).toBe('finished');
@@ -396,12 +470,14 @@ describe('Cornered resolution', () => {
       eliminatedPlayerIds: ['player-3', 'player-4'],
       roles: { 'player-1': 'impostor', 'player-4': 'innocent' },
     });
-    const result = submitSecretFinishChoice(
+    const submitted = submitSecretFinishChoice(
       state,
       'player-1',
       'pass',
-      NOW_MS + 1,
+      deadline(state) - 9_999,
     );
+    const window = expireSecretFinishWindow(submitted, deadline(submitted));
+    const result = expireLastChanceWindow(window, deadline(window));
     expect(result.phase).toBe('active_turn');
     expect(result.winner).toBeNull();
     expect(result.players['player-2']).toMatchObject({
@@ -410,16 +486,25 @@ describe('Cornered resolution', () => {
     });
   });
 
-  it('never offers Secret Finish against a Cornered Impostor', () => {
+  it('uses a pass-only cover window for a Cornered Impostor', () => {
     const state = createCorneredState({
       eligibleAccuserIds: [],
       hands: { 'player-2': ['card_19:1'] },
       roles: { 'player-2': 'impostor', 'player-4': 'innocent' },
     });
 
-    expect(state.phase).toBe('awaiting_last_chance');
-    expect(state.pendingSecretFinish).toBeNull();
-    expect(currentLastChancePlayerId(state)).toBe('player-2');
+    expect(state.phase).toBe('awaiting_secret_finish');
+    expect(() =>
+      submitSecretFinishChoice(
+        state,
+        'player-1',
+        'finish',
+        deadline(state) - 9_999,
+      ),
+    ).toThrow(/not valid/);
+    const result = expireSecretFinishWindow(state, deadline(state));
+    expect(result.phase).toBe('awaiting_last_chance');
+    expect(currentLastChancePlayerId(result)).toBe('player-2');
   });
 
   it('keeps the sealed pass window when the Impostor is Cornered', () => {
@@ -444,14 +529,14 @@ describe('Cornered resolution', () => {
       state,
       'player-1',
       'pass',
-      NOW_MS + 1,
+      deadline(state) - 9_999,
     );
-    const deadline = NOW_MS + 10_000;
+    const expiresAt = deadline(state);
 
-    expect(() => expireSecretFinishWindow(submitted, deadline - 1)).toThrow(
+    expect(() => expireSecretFinishWindow(submitted, expiresAt - 1)).toThrow(
       /has not expired/,
     );
-    const expired = expireSecretFinishWindow(submitted, deadline);
+    const expired = expireSecretFinishWindow(submitted, expiresAt);
 
     expect(expired.phase).toBe('awaiting_last_chance');
     expect(currentLastChancePlayerId(expired)).toBe('player-2');
@@ -463,8 +548,21 @@ describe('Cornered resolution', () => {
       eligibleAccuserIds: [],
       hands: { 'player-2': ['card_19:1'] },
     });
-    const finishedWindow = expireSecretFinishWindow(state, NOW_MS + 10_000);
-    const recovered = playLastChance(finishedWindow, 'player-2', 'card_19:1');
+    const finishedWindow = expireSecretFinishWindow(state, deadline(state));
+    const submitted = playLastChance(
+      finishedWindow,
+      'player-2',
+      'card_19:1',
+      deadline(finishedWindow) - 1,
+    );
+    expect(submitted.players['player-2'].status).toBe('cornered');
+    expect(() =>
+      passLastChance(submitted, 'player-2', deadline(submitted) - 1),
+    ).toThrow(/already submitted/);
+    expect(() =>
+      expireLastChanceWindow(submitted, deadline(submitted) - 1),
+    ).toThrow(/not expired/);
+    const recovered = expireLastChanceWindow(submitted, deadline(submitted));
 
     expect(recovered.players['player-2'].status).toBe('active');
     expect(recovered.players['player-2'].hearts).toBe(1);
@@ -478,8 +576,9 @@ describe('Cornered resolution', () => {
       eligibleAccuserIds: [],
       hands: { 'player-2': ['card_19:1'] },
     });
-    const window = expireSecretFinishWindow(state, NOW_MS + 10_000);
-    const passed = passLastChance(window, 'player-2');
+    const window = expireSecretFinishWindow(state, deadline(state));
+    const submitted = passLastChance(window, 'player-2', deadline(window) - 1);
+    const passed = expireLastChanceWindow(submitted, deadline(submitted));
 
     expect(passed.phase).toBe('active_turn');
     expect(passed.players['player-2'].status).toBe('cornered');

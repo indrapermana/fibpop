@@ -14,6 +14,8 @@ import {
 } from '../src/card-effects.js';
 import {
   currentAccusationPlayerId,
+  expireAccusationOffer,
+  expireLastChanceWindow,
   expireSecretFinishWindow,
   playLastChance,
   respondToAccusation,
@@ -39,6 +41,11 @@ const fixture = turnStartFixtureSchema.parse(
 );
 const NOW = Date.UTC(2026, 10, 17);
 const forfeit = { kind: 'forfeit', nowMs: NOW + 1 } as const;
+
+function deadline(state: MatchState): number {
+  if (!state.deadlineUtc) throw new Error('Missing deadline');
+  return Date.parse(state.deadlineUtc);
+}
 
 function activeState(): MatchState {
   const started = beginTurn(fixture.initialState, { next: () => 0.5 });
@@ -83,6 +90,12 @@ function corneredState(eligibleAccusers: string[] = []): MatchState {
     const responder = currentAttackResponder(attack);
     if (!responder) throw new Error('Missing attack responder');
     attack = respondToAttack(attack, responder, { kind: 'pass' }, NOW);
+  }
+  while (
+    eligibleAccusers.length === 0 &&
+    attack.phase === 'awaiting_accusation'
+  ) {
+    attack = expireAccusationOffer(attack, deadline(attack));
   }
   return attack;
 }
@@ -294,13 +307,15 @@ describe('disconnects and permanent forfeits', () => {
       },
     });
     const next = handlePlayerDeparture(state, 'player-1', forfeit);
-    expect(currentAccusationPlayerId(next)).toBe('player-3');
+    expect(currentAccusationPlayerId(next)).toBe('player-1');
+    const nextOffer = expireAccusationOffer(next, deadline(next));
+    expect(currentAccusationPlayerId(nextOffer)).toBe('player-3');
     expect(next.players['player-1'].status).toBe('eliminated');
     const resolved = respondToAccusation(
-      next,
+      nextOffer,
       'player-3',
       { kind: 'accuse' },
-      NOW + 2,
+      deadline(nextOffer) - 9_999,
     );
     expect(resolved.phase).toBe('turn_start');
     expect(resolved.currentPlayerId).toBe('player-4');
@@ -311,25 +326,36 @@ describe('disconnects and permanent forfeits', () => {
     const next = handlePlayerDeparture(state, 'player-3', forfeit);
     expect(next.pendingCornered?.accusationOrderPlayerIds).toEqual([
       'player-1',
+      'player-4',
     ]);
     const targetForfeits = handlePlayerDeparture(next, 'player-2', forfeit);
     expect(targetForfeits.phase).toBe('active_turn');
     expect(targetForfeits.pendingCornered).toBeNull();
   });
 
-  it('resolves a sealed finish after the last outstanding participant forfeits', () => {
+  it('keeps a sealed finish until the deadline after a participant forfeits', () => {
     const state = corneredState();
-    const pass = submitSecretFinishChoice(state, 'player-1', 'pass', NOW + 1);
+    const pass = submitSecretFinishChoice(
+      state,
+      'player-1',
+      'pass',
+      deadline(state) - 9_999,
+    );
     const finish = submitSecretFinishChoice(
       pass,
       'player-4',
       'finish',
-      NOW + 2,
+      deadline(state) - 9_998,
     );
-    const result = handlePlayerDeparture(finish, 'player-3', {
+    const afterForfeit = handlePlayerDeparture(finish, 'player-3', {
       kind: 'forfeit',
-      nowMs: NOW + 3,
+      nowMs: deadline(state) - 9_997,
     });
+    expect(afterForfeit.phase).toBe('awaiting_secret_finish');
+    const result = expireSecretFinishWindow(
+      afterForfeit,
+      deadline(afterForfeit),
+    );
     expect(result.players['player-2'].status).toBe('eliminated');
     expect(result.phase).toBe('active_turn');
     expect(result.pendingSecretFinish).toBeNull();
@@ -337,9 +363,18 @@ describe('disconnects and permanent forfeits', () => {
 
   it('advances an eliminated turn owner after Last Chance', () => {
     const state = corneredState();
-    const forfeited = handlePlayerDeparture(state, 'player-1', forfeit);
-    const window = expireSecretFinishWindow(forfeited, NOW + 10_000);
-    const result = playLastChance(window, 'player-2', 'card_19:1');
+    const forfeited = handlePlayerDeparture(state, 'player-1', {
+      kind: 'forfeit',
+      nowMs: deadline(state) - 9_999,
+    });
+    const window = expireSecretFinishWindow(forfeited, deadline(forfeited));
+    const submitted = playLastChance(
+      window,
+      'player-2',
+      'card_19:1',
+      deadline(window) - 1,
+    );
+    const result = expireLastChanceWindow(submitted, deadline(submitted));
     expect(result.phase).toBe('turn_start');
     expect(result.currentPlayerId).toBe('player-2');
     expect(result.players['player-2']).toMatchObject({

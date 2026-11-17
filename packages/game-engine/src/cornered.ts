@@ -10,6 +10,7 @@ import { advanceTurnAfterElimination } from './turns.js';
 
 export const ACCUSATION_OFFER_MS = 10_000;
 export const SECRET_FINISH_WINDOW_MS = 10_000;
+export const LAST_CHANCE_WINDOW_MS = 10_000;
 
 export type AccusationResponse = { kind: 'pass' } | { kind: 'accuse' };
 
@@ -56,6 +57,18 @@ function requireWindowOpen(state: MatchState, nowMs: number): void {
   if (nowMs >= Date.parse(state.deadlineUtc)) {
     throw new EngineError('WINDOW_EXPIRED', 'The response window has expired');
   }
+  const duration =
+    state.phase === 'awaiting_accusation'
+      ? ACCUSATION_OFFER_MS
+      : state.phase === 'awaiting_secret_finish'
+        ? SECRET_FINISH_WINDOW_MS
+        : LAST_CHANCE_WINDOW_MS;
+  if (nowMs < Date.parse(state.deadlineUtc) - duration) {
+    throw new EngineError(
+      'INVALID_DEADLINE',
+      'The timestamp precedes the response window',
+    );
+  }
 }
 
 function requireWindowExpired(state: MatchState, nowMs: number): void {
@@ -74,7 +87,7 @@ function requireWindowExpired(state: MatchState, nowMs: number): void {
   }
 }
 
-function isEligibleAccuser(
+export function isEligibleAccuser(
   state: MatchState,
   playerId: string,
   targetPlayerId: string,
@@ -104,21 +117,12 @@ function buildAccusationOrder(
     );
   }
 
-  const eligiblePlayerIds = new Set(
-    state.seatOrder.filter((playerId) =>
-      isEligibleAccuser(state, playerId, pending.targetPlayerId),
-    ),
-  );
   const order: string[] = [];
-
-  if (eligiblePlayerIds.has(pending.attackerPlayerId)) {
-    order.push(pending.attackerPlayerId);
-  }
-
-  for (let offset = 1; offset < state.seatOrder.length; offset += 1) {
+  for (let offset = 0; offset < state.seatOrder.length; offset += 1) {
     const playerId =
       state.seatOrder[(attackerSeatIndex + offset) % state.seatOrder.length];
-    if (eligiblePlayerIds.has(playerId)) {
+    const player = state.players[playerId];
+    if (player?.status === 'active' && player.hearts > 0) {
       order.push(playerId);
     }
   }
@@ -173,7 +177,7 @@ export function resumeInterruptedTurn(state: MatchState): MatchState {
   return matchStateSchema.parse({ ...advanced, version });
 }
 
-function openLastChanceOrResume(state: MatchState): MatchState {
+function openLastChanceWindow(state: MatchState, nowMs: number): MatchState {
   const pending = requirePendingCornered(state);
   const target = state.players[pending.targetPlayerId];
   if (!target || target.status !== 'cornered') {
@@ -183,21 +187,17 @@ function openLastChanceOrResume(state: MatchState): MatchState {
     );
   }
 
-  const readyState = matchStateSchema.parse({
+  return matchStateSchema.parse({
     ...state,
-    phase: 'active_turn',
-    deadlineUtc: null,
+    phase: 'awaiting_last_chance',
+    deadlineUtc: deadlineFromNow(nowMs, LAST_CHANCE_WINDOW_MS),
     pendingSecretFinish: null,
-    pendingCornered: { ...pending, secretFinishResolved: true },
+    pendingCornered: {
+      ...pending,
+      secretFinishResolved: true,
+      lastChanceChoice: null,
+    },
   });
-  if (target.hand.some((card) => getCardDesignId(card) === 'card_19')) {
-    return matchStateSchema.parse({
-      ...readyState,
-      phase: 'awaiting_last_chance',
-    });
-  }
-
-  return resumeInterruptedTurn(readyState);
 }
 
 function openSecretFinishWindow(state: MatchState, nowMs: number): MatchState {
@@ -210,28 +210,10 @@ function openSecretFinishWindow(state: MatchState, nowMs: number): MatchState {
     );
   }
 
-  if (target.role !== 'innocent') {
-    return openLastChanceOrResume(
-      matchStateSchema.parse({
-        ...state,
-        pendingCornered: { ...pending, secretFinishResolved: true },
-      }),
-    );
-  }
-
   const eligiblePlayerIds = state.seatOrder.filter((playerId) => {
     const player = state.players[playerId];
     return player?.status === 'active' && player.hearts > 0;
   });
-  if (eligiblePlayerIds.length === 0) {
-    return openLastChanceOrResume(
-      matchStateSchema.parse({
-        ...state,
-        pendingCornered: { ...pending, secretFinishResolved: true },
-      }),
-    );
-  }
-
   return matchStateSchema.parse({
     ...state,
     phase: 'awaiting_secret_finish',
@@ -275,6 +257,7 @@ export function beginCorneredResolution(
       ...pending,
       accusationOrderPlayerIds,
       accusationIndex: 0,
+      accusationPassed: false,
       secretFinishResolved: false,
     },
   });
@@ -299,7 +282,11 @@ function passCurrentAccusation(state: MatchState, nowMs: number): MatchState {
   const nextState = matchStateSchema.parse({
     ...state,
     version: state.version + 1,
-    pendingCornered: { ...pending, accusationIndex: nextIndex },
+    pendingCornered: {
+      ...pending,
+      accusationIndex: nextIndex,
+      accusationPassed: false,
+    },
   });
 
   if (nextIndex >= pending.accusationOrderPlayerIds.length) {
@@ -423,8 +410,18 @@ export function respondToAccusation(
   }
 
   requireWindowOpen(state, nowMs);
+  if (state.pendingCornered.accusationPassed) {
+    throw new EngineError(
+      'INVALID_ACCUSATION',
+      'The current response was already submitted',
+    );
+  }
   if (response.kind === 'pass') {
-    return passCurrentAccusation(state, nowMs);
+    return matchStateSchema.parse({
+      ...state,
+      version: state.version + 1,
+      pendingCornered: { ...state.pendingCornered, accusationPassed: true },
+    });
   }
 
   return resolveAccusation(state, playerId);
@@ -452,7 +449,10 @@ export function expireAccusationOffer(
   return passCurrentAccusation(state, nowMs);
 }
 
-function resolveSecretFinishWindow(state: MatchState): MatchState {
+function resolveSecretFinishWindow(
+  state: MatchState,
+  nowMs: number,
+): MatchState {
   const pendingSecretFinish = state.pendingSecretFinish;
   const pendingCornered = requirePendingCornered(state);
   if (!pendingSecretFinish || state.phase !== 'awaiting_secret_finish') {
@@ -473,7 +473,7 @@ function resolveSecretFinishWindow(state: MatchState): MatchState {
   }
 
   if (finishSubmitters.length === 0) {
-    return openLastChanceOrResume(
+    return openLastChanceWindow(
       matchStateSchema.parse({
         ...state,
         pendingCornered: {
@@ -483,6 +483,7 @@ function resolveSecretFinishWindow(state: MatchState): MatchState {
         pendingSecretFinish: null,
         deadlineUtc: null,
       }),
+      nowMs,
     );
   }
 
@@ -543,9 +544,7 @@ export function removeSecretFinishParticipant(
     ...state,
     pendingSecretFinish: { ...pending, eligiblePlayerIds, submissions },
   });
-  return eligiblePlayerIds.every((id) => Object.hasOwn(submissions, id))
-    ? resolveSecretFinishWindow(updated)
-    : updated;
+  return updated;
 }
 
 export function submitSecretFinishChoice(
@@ -602,12 +601,6 @@ export function submitSecretFinishChoice(
     version: state.version + 1,
     pendingSecretFinish: { ...pending, submissions },
   });
-  if (
-    pending.eligiblePlayerIds.every((eligibleId) => eligibleId in submissions)
-  ) {
-    return resolveSecretFinishWindow(submittedState);
-  }
-
   return submittedState;
 }
 
@@ -627,7 +620,7 @@ export function expireSecretFinishWindow(
     ...state,
     version: state.version + 1,
   });
-  return resolveSecretFinishWindow(timedOutState);
+  return resolveSecretFinishWindow(timedOutState, nowMs);
 }
 
 export function currentLastChancePlayerId(state: MatchState): string | null {
@@ -662,8 +655,16 @@ export function playLastChance(
   state: MatchState,
   playerId: string,
   cardInstanceId: string,
+  nowMs: number,
 ): MatchState {
-  requireLastChanceTarget(state, playerId);
+  const pending = requireLastChanceTarget(state, playerId);
+  requireWindowOpen(state, nowMs);
+  if (pending.lastChanceChoice !== null) {
+    throw new EngineError(
+      'INVALID_REACTION',
+      'Last Chance response was already submitted',
+    );
+  }
   const target = state.players[playerId];
   if (
     getCardDesignId(cardInstanceId) !== 'card_19' ||
@@ -675,36 +676,73 @@ export function playLastChance(
     );
   }
 
-  const recovered = matchStateSchema.parse({
+  return matchStateSchema.parse({
     ...state,
     version: state.version + 1,
-    phase: 'active_turn',
-    deadlineUtc: null,
-    players: {
-      ...state.players,
-      [playerId]: {
-        ...target,
-        status: 'active',
-        hearts: 1,
-        hand: target.hand.filter((card) => card !== cardInstanceId),
-      },
+    pendingCornered: {
+      ...pending,
+      lastChanceChoice: { kind: 'play', cardInstanceId },
     },
-    discardPile: [...state.discardPile, cardInstanceId],
-    pendingCornered: null,
-    pendingSecretFinish: null,
   });
-  return resumeInterruptedTurn(recovered);
 }
 
 export function passLastChance(
   state: MatchState,
   playerId: string,
+  nowMs: number,
 ): MatchState {
-  requireLastChanceTarget(state, playerId);
-  const passedState = matchStateSchema.parse({
+  const pending = requireLastChanceTarget(state, playerId);
+  requireWindowOpen(state, nowMs);
+  if (pending.lastChanceChoice !== null) {
+    throw new EngineError(
+      'INVALID_REACTION',
+      'Last Chance response was already submitted',
+    );
+  }
+  return matchStateSchema.parse({
     ...state,
     version: state.version + 1,
-    phase: 'active_turn',
+    pendingCornered: { ...pending, lastChanceChoice: { kind: 'pass' } },
   });
-  return resumeInterruptedTurn(passedState);
+}
+
+export function expireLastChanceWindow(
+  state: MatchState,
+  nowMs: number,
+): MatchState {
+  const pending = requirePendingCornered(state);
+  requireLastChanceTarget(state, pending.targetPlayerId);
+  requireWindowExpired(state, nowMs);
+  const choice = pending.lastChanceChoice;
+  const target = state.players[pending.targetPlayerId];
+  if (choice?.kind === 'play') {
+    if (
+      !target.hand.includes(choice.cardInstanceId) ||
+      getCardDesignId(choice.cardInstanceId) !== 'card_19'
+    ) {
+      throw new EngineError(
+        'INVALID_CARD',
+        'The selected Last Chance is no longer in the target hand',
+      );
+    }
+    return resumeInterruptedTurn(
+      matchStateSchema.parse({
+        ...state,
+        version: state.version + 1,
+        players: {
+          ...state.players,
+          [pending.targetPlayerId]: {
+            ...target,
+            status: 'active',
+            hearts: 1,
+            hand: target.hand.filter((card) => card !== choice.cardInstanceId),
+          },
+        },
+        discardPile: [...state.discardPile, choice.cardInstanceId],
+      }),
+    );
+  }
+  return resumeInterruptedTurn(
+    matchStateSchema.parse({ ...state, version: state.version + 1 }),
+  );
 }

@@ -44,7 +44,7 @@ Symptoms: runaway request usage, reconnect storm, stuck room, duplicate score/re
 1. Cornered next scheduled turn -> 1 Heart; no draw or action; following turn normal.
 2. Accusation passes: 10 s **per eligible Active Innocent**, attacker-first priority then clockwise; timeout pass.
 3. Evidence: both Clue and Behavior linked to suspect required; duplicate markers forbidden.
-4. Secret Finish on other player's turn by Active Impostor -> legal; identity not exposed to spectators, other players, event log, or public snapshot.
+4. Secret Finish on other player's turn by Active Impostor -> legal; identity not exposed to spectators, other players, plaintext logs, or public snapshot. Sensitive replay payloads require encryption and controlled access before persistence.
 5. Innocent SECRET_FINISH, Impostor at zero Hearts, and finish of non-Cornered target -> rejected without mutation.
 6. Sealed submissions: spectators cannot infer sender by timing; duplicates/reconnect do not change outcome.
 7. Last Innocent at 0 Hearts remains non-eliminated -> no Impostor win.

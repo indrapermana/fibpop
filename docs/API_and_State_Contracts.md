@@ -41,6 +41,8 @@ Other candidate commands: `READY`, `START_MATCH`, `END_TURN`, `PLAY_REACTION`, `
 
 Envelope: `{protocolVersion, eventId, matchVersion, type, serverTime, payload}`. Errors include stable codes like `NOT_YOUR_TURN`, `STALE_VERSION`, `INVALID_CARD`, `NOT_ELIGIBLE`, `NOT_ROOM_MEMBER`. Do not reveal secret validation details to the caller.
 
+The envelope and `expectedVersion` above are an unfinished proposal, not safe to ship unchanged: raw engine versions advance on private submissions. M3 must use privacy-safe synchronization tokens and publication cadence that do not reveal private responses or their number, and bump `protocolVersion` if the wire contract changes.
+
 ## State model (server private)
 
 ```text
@@ -54,11 +56,13 @@ Match: matchId, rulesVersion, catalogVersion, phase, version,
   eventLog[], processedCommandIds[], createdAt, updatedAt
 ```
 
-Public projection includes hand *counts* but never card IDs for opponents. Private player projection includes own hand/role/evidence. Hidden identities revealed only on terminal resolution or elimination per rule.
+`projectPublicState` includes hand *counts* but never cards held by opponents, private Evidence, raw versions, or sensitive window deadlines. Cornered subphases appear as one public phase. `projectPlayerState` adds only the requesting player's hand, role, Evidence, and private prompt. Elimination and terminal outcomes reveal roles as permitted by the rules. These functions are pure engine views, not authenticated room endpoints.
 
 ## Persistence & ordering
 
 Persist each accepted command atomically (state mutation + event record, preferably one transaction). Respond only after commit. All commands serialized by game room Durable Object. Deadline alarms cannot accidentally process a stale phase; include phase/version token. Deduplicate `commandId` for at least match lifetime. Reconnect submits identity and last seen event version; server issues a fresh private snapshot rather than trusting client replay.
+
+The pure engine's `recordTransition` records an authoritative, versioned state delta after an accepted transition; `replayTransitions` applies serialized deltas in order from a trusted initial snapshot without rerunning randomness or clocks. Events are **sensitive private data**, not client events or diagnostic logs. They can contain roles, hands, Evidence, and sealed submissions, including the submitter. M3 must encrypt sensitive replay data before persistence, protect keys and access, and never write plaintext choices or submitter IDs to logs. State deltas alone do not retain ephemeral private results such as inspected cards; the room must deliver or securely retain those results separately when required.
 
 ## Guest security
 
@@ -82,11 +86,11 @@ Write actual machine-readable fixtures during M0–M1; text examples are intenti
 
 ## Secret Finish privacy and command handling (protocol v2)
 
-After all eligible 10-second accusation offers pass, open a sealed secret-finish window. Eligible Active room members submit exactly one authenticated `SECRET_FINISH` (Impostor only) or `PASS_SECRET_FINISH` (everyone else). **Do not broadcast who selected either choice, and do not broadcast incoming selections as they happen**. Buffer private submissions until everyone has decided or a short configured timer ends. An Active Impostor can submit FINISH even if it's another player's turn; a Cornered Impostor cannot. Nonresponders pass. Finishing costs zero turn actions and is allowed once per Cornered event, not once per turn. Persist participant choices securely (never include them in per-player or public projections), then commit elimination privately and broadcast only victim status and role. `SECRET_FINISH_RESOLVED` must not include actor ID, and player-facing action history must not expose it. An Invalid Innocent FINISH command receives a generic rejection but must not expose the Impostor's identity. Reconnect during the sealed window must not disclose other choices.
+After the padded accusation slots complete, open a fixed 10-second sealed Secret Finish window. Active room members submit exactly one authenticated `SECRET_FINISH` (Active Impostor against a Cornered Innocent only) or `PASS_SECRET_FINISH`; nonresponders pass. A Cornered Impostor target receives a pass-only cover window, not a finish opportunity. **Do not broadcast individual choices or submissions.** Resolve only at the deadline, even when all choices arrive early. Finishing costs zero actions and is allowed once per Cornered event. Persist choices securely, then broadcast only victim status and role; `SECRET_FINISH_RESOLVED` and player-facing history must not include actor ID. Invalid FINISH receives a generic rejection. Reconnect must not disclose other choices.
 
-The pure engine stores the accusation offer order and sealed submissions in private pending state. It accepts a trusted epoch-millisecond timestamp from its caller to set/check `deadlineUtc`; each accusation offer lasts 10 seconds, and the Secret Finish window uses the approved 10-second implementation parameter. The engine rejects late submissions and exposes explicit expiry transitions; nonresponses become passes. Never send `pendingSecretFinish.submissions` to clients.
+The pure engine stores the padded accusation slot order, sealed submissions, and Last Chance choice in private pending state. Its trusted caller supplies epoch-millisecond timestamps and must invoke the explicit expiry transitions. Each slot and both later windows last 10 seconds; early pass/play responses remain private until the relevant deadline. Never send `pendingSecretFinish.submissions` or raw pending state to clients.
 
-**Projection requirement for M1-13/M3:** The engine skips Secret Finish for an Impostor target, as required by the rules. Exposing that phase transition or its timing directly would reveal the target's hidden role. The online protocol must mask this distinction without offering an actual finish against an Impostor; this privacy behavior is not yet implemented.
+**M3 delivery requirement:** Room snapshots and all messages, errors, acknowledgments, reconnects, and publication timing must preserve the engine's cover and redaction. Do not expose raw phase, raw version, pending choices, eligibility queues, or private transitions; engine projection tests alone cannot establish transport-level secrecy.
 
 If no accusation or Secret Finish eliminates the Cornered target and they hold Last Chance, offer it to that target. Playing it costs no action, discards the card, and restores them to one Heart; passing leaves them Cornered and resumes the interrupted turn. If an incorrect accusation eliminated the interrupted turn owner, advance to the next scheduled turn instead.
 

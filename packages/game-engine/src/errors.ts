@@ -1,5 +1,6 @@
 export const engineErrorCodes = [
   'INVALID_COMMAND',
+  'INVALID_EVENT',
   'INVALID_PHASE',
   'NOT_YOUR_TURN',
   'NOT_ELIGIBLE',

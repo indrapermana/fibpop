@@ -348,9 +348,11 @@ describe('attacks and reactions', () => {
       attackerPlayerId: 'player-1',
       targetPlayerId: 'player-2',
       attackCardInstanceId: 'card_04:1',
-      accusationOrderPlayerIds: ['player-3'],
+      accusationOrderPlayerIds: ['player-1', 'player-3', 'player-4'],
       accusationIndex: 0,
+      accusationPassed: false,
       secretFinishResolved: false,
+      lastChanceChoice: null,
     });
     expect(cornered.deadlineUtc).toBe(
       new Date(FIXED_NOW_MS + 10_000).toISOString(),

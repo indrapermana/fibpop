@@ -113,7 +113,20 @@ const pendingCorneredSchema = z
     attackCardInstanceId: z.string().min(1),
     accusationOrderPlayerIds: z.array(z.string().min(1)).default([]),
     accusationIndex: z.number().int().min(0).default(0),
+    accusationPassed: z.boolean().default(false),
     secretFinishResolved: z.boolean().default(false),
+    lastChanceChoice: z
+      .union([
+        z.object({ kind: z.literal('pass') }).strict(),
+        z
+          .object({
+            kind: z.literal('play'),
+            cardInstanceId: z.string().min(1),
+          })
+          .strict(),
+      ])
+      .nullable()
+      .default(null),
   })
   .strict();
 
