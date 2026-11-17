@@ -2,7 +2,7 @@
 
 ## Locked stack
 
-- **Client:** Flutter (Android/iOS) with Flutter UI for cards/lobby and Flame only when its animation/game-loop features add value; Riverpod or another consistent Flutter state manager (select and pin during M1).
+- **Client:** Flutter (Android/iOS) with Flutter UI for cards/lobby and Flame only when its animation/game-loop features add value; Flutter Riverpod 2.6.1 for state management and Flutter Navigator for app navigation. This pin avoids the test-server dependencies pulled in by Riverpod 3.3.1; revisit the version when upgrading the Flutter SDK.
 - **Web later:** Flutter Web, hosted on Cloudflare Pages.
 - **API:** TypeScript + Hono on Cloudflare Workers; Zod validation.
 - **Multiplayer:** Cloudflare Durable Objects (one `GameRoom` per match; separate matchmaking coordinator) with native **WebSocket Hibernation API**.

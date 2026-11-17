@@ -87,6 +87,9 @@ flutter pub get
 flutter run
 ```
 
-Use `flutter test` from `apps/mobile` for the mobile smoke test. The shared
-golden fixture directory is `shared/fixtures`; M0 validates the fixture shape,
-while cross-engine behavior fixtures are added with the game engine milestone.
+Use `flutter analyze` and `flutter test` from `apps/mobile` to check the mobile
+app. The app uses Flutter Riverpod 2.6.1 for state management and Flutter
+Navigator for routes. App bootstrap and routes live in `lib/app`; screens are
+organized by feature in `lib/features`. Offline play is not implemented yet.
+Shared cross-engine fixtures live in `shared/fixtures`; the Dart engine and its
+fixture runner are planned for M2.
