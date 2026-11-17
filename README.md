@@ -92,8 +92,15 @@ Use `flutter analyze` and `flutter test` from `apps/mobile` to check the mobile
 app. The app uses Flutter Riverpod 2.6.1 for state management and Flutter
 Navigator for routes. App bootstrap and routes live in `lib/app`; screens are
 organized by feature in `lib/features`. Offline play is not implemented yet.
-Shared cross-engine fixtures live in `shared/fixtures`; the Dart engine and its
-fixture runner are planned for M2.
+Shared cross-engine fixtures live in `shared/fixtures`. The pure Dart engine
+in `lib/engine` currently implements setup, turn transitions, Suspicion,
+public-action history, Evidence, investigations, and attacks through
+Cornered-window entry and resolution, including accusations, Secret Finish,
+Last Chance, interrupted-turn resumption, terminal outcomes, and forfeits.
+All current action-card effects, player/public projections, and authoritative
+transition replay are implemented. Full fixture parity remains.
+Unsupported phases and pending reaction states are rejected, not treated as
+playable.
 
 The app supports English and Bahasa Indonesia. It follows the device language by
 default; the language selector applies until the app restarts, with persistence
