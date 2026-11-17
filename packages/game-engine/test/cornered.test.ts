@@ -266,6 +266,26 @@ describe('Cornered resolution', () => {
     expect(resolved.players['player-2'].status).toBe('eliminated');
   });
 
+  it('awards a Cornered Impostor the win after the final wrong accusation', () => {
+    const state = createCorneredState({
+      eligibleAccuserIds: ['player-1'],
+      eliminatedPlayerIds: ['player-4'],
+      corneredPlayerIds: ['player-3'],
+      roles: { 'player-3': 'impostor', 'player-4': 'innocent' },
+    });
+    const result = respondToAccusation(
+      state,
+      'player-1',
+      { kind: 'accuse' },
+      NOW_MS + 1,
+    );
+    expect(result.winner).toEqual({ kind: 'winner', playerId: 'player-3' });
+    expect(result.players['player-3']).toMatchObject({
+      status: 'cornered',
+      hearts: 0,
+    });
+  });
+
   it('opens a sealed Secret Finish window only after all accusation offers pass', () => {
     const state = createCorneredState({
       eligibleAccuserIds: ['player-1', 'player-3'],
@@ -368,6 +388,26 @@ describe('Cornered resolution', () => {
       playerId: 'player-1',
     });
     expect(finished.pendingSecretFinish).toBeNull();
+  });
+
+  it('does not award victory when the final Innocent remains Cornered after a pass', () => {
+    const state = createCorneredState({
+      eligibleAccuserIds: [],
+      eliminatedPlayerIds: ['player-3', 'player-4'],
+      roles: { 'player-1': 'impostor', 'player-4': 'innocent' },
+    });
+    const result = submitSecretFinishChoice(
+      state,
+      'player-1',
+      'pass',
+      NOW_MS + 1,
+    );
+    expect(result.phase).toBe('active_turn');
+    expect(result.winner).toBeNull();
+    expect(result.players['player-2']).toMatchObject({
+      status: 'cornered',
+      hearts: 0,
+    });
   });
 
   it('never offers Secret Finish against a Cornered Impostor', () => {

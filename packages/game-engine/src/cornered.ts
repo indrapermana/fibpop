@@ -1,5 +1,6 @@
 import { getCardDesignId } from './card-instance.js';
 import { EngineError } from './errors.js';
+import { findImpostorWinner } from './outcomes.js';
 import {
   matchStateSchema,
   type MatchState,
@@ -137,34 +138,7 @@ function currentAccuser(state: MatchState): string | null {
   );
 }
 
-function findImpostorWinner(state: MatchState): MatchState | null {
-  const impostor = Object.values(state.players).find(
-    (player) => player.role === 'impostor',
-  );
-  if (
-    !impostor ||
-    impostor.status === 'eliminated' ||
-    Object.values(state.players).some(
-      (player) => player.role === 'innocent' && player.status !== 'eliminated',
-    )
-  ) {
-    return null;
-  }
-
-  return matchStateSchema.parse({
-    ...state,
-    phase: 'finished',
-    currentPlayerId: null,
-    deadlineUtc: null,
-    pendingAttack: null,
-    pendingCardEffect: null,
-    pendingCornered: null,
-    pendingSecretFinish: null,
-    winner: { kind: 'winner', playerId: impostor.playerId },
-  });
-}
-
-function resumeInterruptedTurn(state: MatchState): MatchState {
+export function resumeInterruptedTurn(state: MatchState): MatchState {
   const version = state.version;
   const resumed = matchStateSchema.parse({
     ...state,
@@ -418,11 +392,7 @@ function resolveAccusation(
     return winnerState;
   }
 
-  if (eliminatedState.currentPlayerId === accuserPlayerId) {
-    return resumeInterruptedTurn(eliminatedState);
-  }
-
-  return eliminatedState;
+  return resumeInterruptedTurn(eliminatedState);
 }
 
 export function respondToAccusation(
@@ -552,6 +522,32 @@ function resolveSecretFinishWindow(state: MatchState): MatchState {
   return winnerState ?? resumeInterruptedTurn(eliminatedState);
 }
 
+export function removeSecretFinishParticipant(
+  state: MatchState,
+  playerId: string,
+): MatchState {
+  const pending = state.pendingSecretFinish;
+  if (state.phase !== 'awaiting_secret_finish' || !pending) {
+    throw new EngineError('INVALID_PHASE', 'There is no Secret Finish window');
+  }
+  if (!pending.eligiblePlayerIds.includes(playerId)) {
+    return state;
+  }
+
+  const submissions = { ...pending.submissions };
+  delete submissions[playerId];
+  const eligiblePlayerIds = pending.eligiblePlayerIds.filter(
+    (id) => id !== playerId,
+  );
+  const updated = matchStateSchema.parse({
+    ...state,
+    pendingSecretFinish: { ...pending, eligiblePlayerIds, submissions },
+  });
+  return eligiblePlayerIds.every((id) => Object.hasOwn(submissions, id))
+    ? resolveSecretFinishWindow(updated)
+    : updated;
+}
+
 export function submitSecretFinishChoice(
   state: MatchState,
   playerId: string,
@@ -679,7 +675,7 @@ export function playLastChance(
     );
   }
 
-  return matchStateSchema.parse({
+  const recovered = matchStateSchema.parse({
     ...state,
     version: state.version + 1,
     phase: 'active_turn',
@@ -697,6 +693,7 @@ export function playLastChance(
     pendingCornered: null,
     pendingSecretFinish: null,
   });
+  return resumeInterruptedTurn(recovered);
 }
 
 export function passLastChance(

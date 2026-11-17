@@ -3,6 +3,7 @@ export * from './card-effects.js';
 export * from './card-instance.js';
 export * from './attacks.js';
 export * from './cornered.js';
+export * from './departures.js';
 export * from './commands.js';
 export * from './deck.js';
 export * from './errors.js';
