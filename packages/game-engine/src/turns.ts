@@ -1,5 +1,6 @@
 import { matchStateSchema, type MatchState } from './state.js';
-import { shuffleInPlace, type RandomSource } from './random.js';
+import type { RandomSource } from './random.js';
+import { drawCardsFromPiles } from './deck.js';
 import { EngineError } from './errors.js';
 
 export const CARDS_PER_TURN = 2;
@@ -25,29 +26,19 @@ export function beginTurn(state: MatchState, random: RandomSource): MatchState {
     throw new Error('The current player must be Active to draw at turn start');
   }
 
-  const drawPile = [...state.drawPile];
-  let discardPile = [...state.discardPile];
+  const { cards, drawPile, discardPile } = drawCardsFromPiles(
+    state.drawPile,
+    state.discardPile,
+    CARDS_PER_TURN,
+    random,
+  );
   const players = {
     ...state.players,
     [currentPlayerId]: {
       ...currentPlayer,
-      hand: [...currentPlayer.hand],
+      hand: [...currentPlayer.hand, ...cards],
     },
   };
-
-  for (let cardNumber = 0; cardNumber < CARDS_PER_TURN; cardNumber += 1) {
-    if (drawPile.length === 0 && discardPile.length > 0) {
-      drawPile.push(...shuffleInPlace(discardPile, random));
-      discardPile = [];
-    }
-
-    const cardInstanceId = drawPile.pop();
-    if (cardInstanceId === undefined) {
-      break;
-    }
-
-    players[currentPlayerId].hand.push(cardInstanceId);
-  }
 
   return matchStateSchema.parse({
     ...state,
@@ -56,6 +47,7 @@ export function beginTurn(state: MatchState, random: RandomSource): MatchState {
     actionsRemaining: ACTIONS_PER_TURN,
     attacksUsedThisTurn: 0,
     suspicionAwardedForDamageThisTurn: false,
+    investigationTargetsThisTurn: [],
     players,
     drawPile,
     discardPile,
@@ -222,6 +214,7 @@ export function endTurn(
     actionsRemaining: 0,
     attacksUsedThisTurn: 0,
     suspicionAwardedForDamageThisTurn: false,
+    investigationTargetsThisTurn: [],
     currentPlayerId: nextPlayerId,
     players,
     discardPile,

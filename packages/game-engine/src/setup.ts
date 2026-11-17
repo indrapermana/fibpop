@@ -72,6 +72,7 @@ export function createMatch(input: CreateMatchInput): MatchState {
       suspicion: 0,
       hand: [],
       evidence: {},
+      lastPlayedActionCardInstanceId: null,
       accusationUsed: false,
     };
   });
@@ -99,6 +100,7 @@ export function createMatch(input: CreateMatchInput): MatchState {
     actionsRemaining: 0,
     attacksUsedThisTurn: 0,
     suspicionAwardedForDamageThisTurn: false,
+    investigationTargetsThisTurn: [],
     currentPlayerId,
     seatOrder: [...input.playerIds],
     deadlineUtc: null,

@@ -86,6 +86,8 @@ The initial pure-engine command contract supports `END_TURN` (pass to the next s
 
 `publicActionHistory` records only successful attacks that dealt damage and publicly visible Noisy manipulations, with the acting player and action kind. These are the qualifying logged actions for Behavior Evidence under R09. `suspicionAwardedForDamageThisTurn` is reset at turn boundaries and prevents repeated damage events from awarding more than one Suspicion in a turn; all Suspicion adjustments remain clamped to 0–3.
 
+Investigation implementation preserves Evidence per investigator/suspect pair and keeps inspected-card details in the acting player's private result, not in match events or shared state fields. The first Investigation card played against each target during a turn consumes that target's one opportunity, even if the target is below 3 Suspicion then; a later card is not discounted if Suspicion rises during that turn. The product owner confirmed this interpretation on 2026-11-18. Peek draws one card but skips inspection when the chosen player's hand is empty, as also confirmed on 2026-11-18. Check Alibi reveals no card when the target has no recorded Action card. Hand-inspection prevention from Extra Clue and Misdirection leaves the Evidence effect intact.
+
 ## Remaining balance questions (NOT missing implementation rules)
 
 Investigation may not reveal enough information to make accusations satisfying; Spotlight utility and 4-player Impostor win rates require playtesting. These do not authorize silently modifying published rules or card quantities.
