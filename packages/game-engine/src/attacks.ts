@@ -1,3 +1,4 @@
+import { playActionCard } from './action-card.js';
 import { validateAttackTarget } from './commands.js';
 import { getCardDesignId } from './card-instance.js';
 import { EngineError } from './errors.js';
@@ -7,7 +8,6 @@ import {
   hasBehaviorEvidenceQualifyingAction,
   recordSuccessfulAttackDamage,
 } from './suspicion.js';
-import { spendAction } from './turns.js';
 
 const attackCardIds = new Set(['card_01', 'card_02', 'card_03', 'card_04']);
 const targetDefenseCardIds = new Set(['card_05', 'card_06', 'card_08']);
@@ -15,7 +15,7 @@ const stepInCardId = 'card_07';
 const safePlaceCardId = 'card_21';
 
 export type AttackResponse =
-  | { kind: 'pass' }
+  | { kind: 'pass'; discardCardInstanceId?: string }
   | { kind: 'defend'; cardInstanceId: string }
   | { kind: 'step_in'; cardInstanceId: string };
 
@@ -78,36 +78,49 @@ export function startAttack(
     );
   }
 
-  requireCardInHand(
+  const played = playActionCard(
     state,
     attackerPlayerId,
     attackCardInstanceId,
     attackCardIds,
+    'attack',
   );
-  const attacker = state.players[attackerPlayerId];
-  const spent = spendAction(state, 'attack');
-  const players = {
-    ...spent.players,
-    [attackerPlayerId]: {
-      ...attacker,
-      hand: attacker.hand.filter((card) => card !== attackCardInstanceId),
-      lastPlayedActionCardInstanceId: attackCardInstanceId,
-    },
-  };
 
-  return matchStateSchema.parse({
-    ...spent,
+  const attackState = matchStateSchema.parse({
+    ...played.state,
     phase: 'awaiting_reaction',
-    players,
-    discardPile: [...state.discardPile, attackCardInstanceId],
     pendingAttack: {
       attackerPlayerId,
       targetPlayerId,
       attackCardInstanceId,
       stepInPlayerIds: buildStepInOrder(state, targetPlayerId),
       stepInIndex: -1,
+      targetDiscardCardInstanceId: null,
+      calloutRevealedActionCardInstanceId:
+        played.cardDesignId === 'card_03'
+          ? state.players[targetPlayerId].lastPlayedActionCardInstanceId
+          : null,
     },
     pendingCornered: null,
+  });
+
+  if (
+    played.cardDesignId !== 'card_04' ||
+    state.players[targetPlayerId].suspicion < 2 ||
+    !hasBehaviorEvidenceQualifyingAction(state, targetPlayerId)
+  ) {
+    return attackState;
+  }
+
+  const withEvidence = grantEvidence(
+    attackState,
+    attackerPlayerId,
+    targetPlayerId,
+    'behavior',
+  );
+  return matchStateSchema.parse({
+    ...withEvidence,
+    version: state.version + 1,
   });
 }
 
@@ -155,12 +168,27 @@ function resolveDamage(state: MatchState): MatchState {
     });
   }
 
+  const targetDiscardCardInstanceId = pending.targetDiscardCardInstanceId;
+  if (
+    targetDiscardCardInstanceId !== null &&
+    !target.hand.includes(targetDiscardCardInstanceId)
+  ) {
+    throw new EngineError(
+      'INVALID_DISCARD',
+      'The selected Double Down card must remain in the target hand',
+    );
+  }
+
   const hearts = target.hearts - 1;
   const cornered = hearts === 0;
   const players = {
     ...state.players,
     [pending.targetPlayerId]: {
       ...target,
+      hand:
+        targetDiscardCardInstanceId === null
+          ? target.hand
+          : target.hand.filter((card) => card !== targetDiscardCardInstanceId),
       hearts,
       status: cornered ? 'cornered' : 'active',
     },
@@ -177,6 +205,10 @@ function resolveDamage(state: MatchState): MatchState {
           attackCardInstanceId: pending.attackCardInstanceId,
         }
       : null,
+    discardPile:
+      targetDiscardCardInstanceId === null
+        ? state.discardPile
+        : [...state.discardPile, targetDiscardCardInstanceId],
   });
   const recordedState = recordSuccessfulAttackDamage(
     woundedState,
@@ -300,15 +332,63 @@ export function respondToAttack(
 
   if (response.kind === 'pass') {
     if (pending.stepInIndex === -1) {
+      const attackDesignId = getCardDesignId(pending.attackCardInstanceId);
+      const target = state.players[pending.targetPlayerId];
+      const discardCardInstanceId = response.discardCardInstanceId;
+      if (attackDesignId !== 'card_02' && discardCardInstanceId !== undefined) {
+        throw new EngineError(
+          'INVALID_DISCARD',
+          'Only Double Down allows the target to select a discard',
+        );
+      }
+
+      if (
+        attackDesignId === 'card_02' &&
+        target.hand.length > 0 &&
+        discardCardInstanceId === undefined
+      ) {
+        throw new EngineError(
+          'INVALID_DISCARD',
+          'The target must select a card for Double Down if damage succeeds',
+        );
+      }
+
+      if (
+        discardCardInstanceId !== undefined &&
+        !target.hand.includes(discardCardInstanceId)
+      ) {
+        throw new EngineError(
+          'INVALID_DISCARD',
+          'The selected Double Down card must be in the target hand',
+        );
+      }
+
+      const stateWithDiscardChoice = matchStateSchema.parse({
+        ...state,
+        pendingAttack: {
+          ...pending,
+          targetDiscardCardInstanceId: discardCardInstanceId ?? null,
+        },
+      });
       if (pending.stepInPlayerIds.length === 0) {
-        return resolveDamage(state);
+        return resolveDamage(stateWithDiscardChoice);
       }
 
       return matchStateSchema.parse({
-        ...state,
+        ...stateWithDiscardChoice,
         version: state.version + 1,
-        pendingAttack: { ...pending, stepInIndex: 0 },
+        pendingAttack: {
+          ...stateWithDiscardChoice.pendingAttack,
+          stepInIndex: 0,
+        },
       });
+    }
+
+    if (response.discardCardInstanceId !== undefined) {
+      throw new EngineError(
+        'INVALID_DISCARD',
+        'Only the attack target may select a Double Down discard',
+      );
     }
 
     const nextStepInIndex = pending.stepInIndex + 1;
@@ -399,21 +479,20 @@ export function playSafePlace(
     );
   }
 
-  const spent = spendAction(state, 'action');
+  const played = playActionCard(
+    state,
+    casterPlayerId,
+    cardInstanceId,
+    new Set([safePlaceCardId]),
+  );
   return matchStateSchema.parse({
-    ...spent,
+    ...played.state,
     version: state.version + 1,
     players: {
-      ...spent.players,
-      [casterPlayerId]: {
-        ...caster,
-        hand: caster.hand.filter((card) => card !== cardInstanceId),
-        lastPlayedActionCardInstanceId: cardInstanceId,
-      },
+      ...played.state.players,
     },
-    discardPile: [...state.discardPile, cardInstanceId],
     activeEffects: [
-      ...state.activeEffects,
+      ...played.state.activeEffects,
       {
         type: 'safe_place',
         casterPlayerId,

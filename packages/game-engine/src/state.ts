@@ -22,6 +22,7 @@ export const matchPhaseSchema = z.enum([
   'dealing',
   'turn_start',
   'active_turn',
+  'awaiting_card_effect',
   'awaiting_reaction',
   'awaiting_accusation',
   'awaiting_secret_finish',
@@ -82,8 +83,27 @@ const pendingAttackSchema = z
     attackCardInstanceId: z.string().min(1),
     stepInPlayerIds: z.array(z.string().min(1)),
     stepInIndex: z.number().int().min(-1),
+    targetDiscardCardInstanceId: z.string().nullable().default(null),
+    calloutRevealedActionCardInstanceId: z.string().nullable().default(null),
   })
   .strict();
+
+const pendingCardEffectSchema = z.discriminatedUnion('kind', [
+  z
+    .object({
+      kind: z.literal('catch_your_breath_discard'),
+      actorPlayerId: z.string().min(1),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('stir_the_pot_discards'),
+      actorPlayerId: z.string().min(1),
+      targetPlayerIds: z.tuple([z.string().min(1), z.string().min(1)]),
+      responseIndex: z.number().int().min(0).max(1),
+    })
+    .strict(),
+]);
 
 const pendingCorneredSchema = z
   .object({
@@ -111,6 +131,7 @@ export const matchStateSchema = z
     investigationTargetsThisTurn: z.array(z.string()).default([]),
     currentPlayerId: z.string().nullable(),
     pendingAttack: pendingAttackSchema.nullable().default(null),
+    pendingCardEffect: pendingCardEffectSchema.nullable().default(null),
     pendingCornered: pendingCorneredSchema.nullable().default(null),
     seatOrder: z.array(z.string().min(1)).min(4).max(8),
     deadlineUtc: z.string().datetime().nullable(),
@@ -132,6 +153,7 @@ export type MatchPhase = z.infer<typeof matchPhaseSchema>;
 export type PlayerState = z.infer<typeof playerStateSchema>;
 export type ActiveEffect = z.infer<typeof activeEffectSchema>;
 export type PendingAttack = z.infer<typeof pendingAttackSchema>;
+export type PendingCardEffect = z.infer<typeof pendingCardEffectSchema>;
 export type PendingCornered = z.infer<typeof pendingCorneredSchema>;
 export type MatchOutcome = z.infer<typeof matchOutcomeSchema>;
 export type MatchState = z.infer<typeof matchStateSchema>;

@@ -211,6 +211,98 @@ describe('attacks and reactions', () => {
     ]);
   });
 
+  it('requires and applies Double Down discard only when damage succeeds', () => {
+    const state = activeState({
+      'player-1': ['card_02:1'],
+      'player-2': ['card_09:1'],
+    });
+    const attack = startAttack(state, 'player-1', 'player-2', 'card_02:1');
+    expect(() => respondToAttack(attack, 'player-2', { kind: 'pass' })).toThrow(
+      /must select a card for Double Down/,
+    );
+    const targetPass = respondToAttack(attack, 'player-2', {
+      kind: 'pass',
+      discardCardInstanceId: 'card_09:1',
+    });
+    const damaged = passAllReactions(targetPass);
+
+    expect(damaged.players['player-2'].hand).toEqual([]);
+    expect(damaged.players['player-2'].hearts).toBe(2);
+    expect(damaged.discardPile).toEqual(['card_02:1', 'card_09:1']);
+
+    const blockedState = activeState({
+      'player-1': ['card_02:1'],
+      'player-2': ['card_05:1', 'card_09:2'],
+    });
+    const blocked = respondToAttack(
+      startAttack(blockedState, 'player-1', 'player-2', 'card_02:1'),
+      'player-2',
+      { kind: 'defend', cardInstanceId: 'card_05:1' },
+    );
+    expect(blocked.players['player-2'].hand).toEqual(['card_09:2']);
+  });
+
+  it('publicly reveals Callout data and grants Corner Them Evidence despite a block', () => {
+    const calloutBase = activeState({
+      'player-1': ['card_03:1'],
+      'player-2': ['card_05:1'],
+    });
+    const calloutState = matchStateSchema.parse({
+      ...calloutBase,
+      players: {
+        ...calloutBase.players,
+        'player-2': {
+          ...calloutBase.players['player-2'],
+          lastPlayedActionCardInstanceId: 'card_14:1',
+        },
+      },
+    });
+    const callout = startAttack(
+      calloutState,
+      'player-1',
+      'player-2',
+      'card_03:1',
+    );
+    expect(callout.pendingAttack?.calloutRevealedActionCardInstanceId).toBe(
+      'card_14:1',
+    );
+
+    const cornerThemBase = activeState(
+      {
+        'player-1': ['card_04:1'],
+        'player-2': ['card_05:2'],
+      },
+      {},
+      { 'player-2': 2 },
+    );
+    const cornerThemState = matchStateSchema.parse({
+      ...cornerThemBase,
+      publicActionHistory: [
+        { playerId: 'player-2', kind: 'noisy_manipulation' },
+      ],
+    });
+    const attack = startAttack(
+      cornerThemState,
+      'player-1',
+      'player-2',
+      'card_04:1',
+    );
+    expect(attack.players['player-1'].evidence['player-2']).toEqual({
+      clue: false,
+      behavior: true,
+    });
+
+    const blocked = respondToAttack(attack, 'player-2', {
+      kind: 'defend',
+      cardInstanceId: 'card_05:2',
+    });
+    expect(blocked.players['player-2'].hearts).toBe(3);
+    expect(blocked.players['player-1'].evidence['player-2']).toEqual({
+      clue: false,
+      behavior: true,
+    });
+  });
+
   it('enters Cornered after the successful damage and preserves attack context', () => {
     const state = activeState({ 'player-1': ['card_04:1'] }, { 'player-2': 1 });
     const cornered = passAllReactions(

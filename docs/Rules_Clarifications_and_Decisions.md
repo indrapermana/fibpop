@@ -90,6 +90,10 @@ Investigation implementation preserves Evidence per investigator/suspect pair an
 
 Attack implementation follows R05: the target responds first, then eligible Active players (including the attacker) receive Step In in clockwise order after a target pass. A successful defense ends the reaction sequence; if all pass, resolve one damage, consuming Safe Place before reducing Hearts. A Safe Place shield expires when it prevents damage or when its caster reaches their next scheduled turn, including a scheduled Cornered recovery/skip.
 
+Remaining card effects preserve the 2.1.0 card text and add no balance changes. Double Down's target selects a conditional discard when passing; it is discarded only if damage resolves, and a defense leaves the card untouched. Callout exposes the target's latest Action card publicly during the pending attack, if one exists. Corner Them checks its Suspicion and qualifying-history rider when played, so eligible Behavior Evidence is granted even if the attack is later blocked; the product owner confirmed these three interpretations on 2026-11-17.
+
+Stir the Pot is rejected before spending its card or action unless two different other Active players each hold a card; those players choose and discard their own cards in clockwise order after the actor. Catch Your Breath draws up to two and pauses the turn for its owner to discard one before taking another action. Card Swap uses injected randomness to select from the actor's post-play hand and the target's hand. Spotlight returns the public Suspicion values alongside the acting player's private draw. Last Chance remains part of M1-11 because its use depends on the accusation and Secret Finish windows.
+
 ## Remaining balance questions (NOT missing implementation rules)
 
 Investigation may not reveal enough information to make accusations satisfying; Spotlight utility and 4-player Impostor win rates require playtesting. These do not authorize silently modifying published rules or card quantities.
