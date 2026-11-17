@@ -37,7 +37,9 @@ Tasks are ordered within each milestone and use stable IDs for tracking. Check a
 - [x] **M1-12 — Implement terminal outcomes and forfeits.** Cover Innocent solo wins, Impostor sole-survivor wins including Cornered status, final Innocent handling, cancellation on Impostor forfeit, and no elimination on disconnect alone. Verified with focused tests and `npm run check`.
 - [x] **M1-13 — Add replayable events and safe projections.** Produce deterministic state transitions and public/private player views; prove that hidden roles, hands, deck order, and private Evidence are not exposed. Engine replay and projection tests pass; encrypted storage and transport-level privacy remain M3 responsibilities.
 - [x] **M1-14 — Complete engine fixture coverage.** Add shared golden fixtures for every card design, major rule transition, illegal edge, and win/forfeit case; verify replay consistency.
-- [ ] **M1-15 — Verify engine boundaries.** Run focused tests, lint, and typecheck; confirm the package imports no Hono, Cloudflare, database, or UI modules.
+- [x] **M1-15 — Verify engine boundaries.** Run focused tests, lint, and typecheck; confirm the package imports no Hono, Cloudflare, database, or UI modules.
+
+**M1 verification:** `npx vitest run packages/game-engine/test` passed 162 tests; `npm run check` passed formatting, lint, typecheck, and 163 tests. A TypeScript AST audit of all 21 engine source files found only in-package imports and Zod, with no dynamic imports or `require` calls. Test-only Node helpers are outside the production source boundary. Dart fixture parity remains M2 work; encrypted replay storage and transport-level secrecy remain M3 work.
 
 ## M2 — Flutter offline playable
 
