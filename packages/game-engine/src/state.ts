@@ -10,6 +10,7 @@ export const matchPhaseSchema = z.enum([
   'lobby',
   'ready_check',
   'dealing',
+  'turn_start',
   'active_turn',
   'awaiting_reaction',
   'awaiting_accusation',

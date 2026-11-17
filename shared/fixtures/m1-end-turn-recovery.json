@@ -1,0 +1,138 @@
+{
+  "fixtureVersion": 1,
+  "rulesVersion": "2.1.0",
+  "catalogVersion": "1.0.0",
+  "name": "m1-end-turn-recovery-and-discard",
+  "initialState": {
+    "matchId": "end-turn-recovery",
+    "rulesVersion": "2.1.0",
+    "catalogVersion": "1.0.0",
+    "phase": "active_turn",
+    "version": 9,
+    "currentPlayerId": "player-1",
+    "seatOrder": ["player-1", "player-2", "player-3", "player-4"],
+    "deadlineUtc": null,
+    "players": {
+      "player-1": {
+        "playerId": "player-1",
+        "role": "impostor",
+        "status": "active",
+        "hearts": 3,
+        "suspicion": 0,
+        "hand": [
+          "p1-card-1",
+          "p1-card-2",
+          "p1-card-3",
+          "p1-card-4",
+          "p1-card-5",
+          "p1-card-6",
+          "p1-card-7",
+          "p1-card-8"
+        ],
+        "evidence": {},
+        "accusationUsed": false
+      },
+      "player-2": {
+        "playerId": "player-2",
+        "role": "innocent",
+        "status": "eliminated",
+        "hearts": 0,
+        "suspicion": 0,
+        "hand": [],
+        "evidence": {},
+        "accusationUsed": false
+      },
+      "player-3": {
+        "playerId": "player-3",
+        "role": "innocent",
+        "status": "cornered",
+        "hearts": 0,
+        "suspicion": 1,
+        "hand": ["p3-card-1"],
+        "evidence": {},
+        "accusationUsed": false
+      },
+      "player-4": {
+        "playerId": "player-4",
+        "role": "innocent",
+        "status": "active",
+        "hearts": 2,
+        "suspicion": 0,
+        "hand": ["p4-card-1"],
+        "evidence": {},
+        "accusationUsed": false
+      }
+    },
+    "drawPile": ["draw-pile-card"],
+    "discardPile": ["old-discard-card"],
+    "activeEffects": [],
+    "accusationUsed": [],
+    "winner": null
+  },
+  "discardCardInstanceIds": ["p1-card-8"],
+  "expectedState": {
+    "matchId": "end-turn-recovery",
+    "rulesVersion": "2.1.0",
+    "catalogVersion": "1.0.0",
+    "phase": "turn_start",
+    "version": 10,
+    "currentPlayerId": "player-4",
+    "seatOrder": ["player-1", "player-2", "player-3", "player-4"],
+    "deadlineUtc": null,
+    "players": {
+      "player-1": {
+        "playerId": "player-1",
+        "role": "impostor",
+        "status": "active",
+        "hearts": 3,
+        "suspicion": 0,
+        "hand": [
+          "p1-card-1",
+          "p1-card-2",
+          "p1-card-3",
+          "p1-card-4",
+          "p1-card-5",
+          "p1-card-6",
+          "p1-card-7"
+        ],
+        "evidence": {},
+        "accusationUsed": false
+      },
+      "player-2": {
+        "playerId": "player-2",
+        "role": "innocent",
+        "status": "eliminated",
+        "hearts": 0,
+        "suspicion": 0,
+        "hand": [],
+        "evidence": {},
+        "accusationUsed": false
+      },
+      "player-3": {
+        "playerId": "player-3",
+        "role": "innocent",
+        "status": "active",
+        "hearts": 1,
+        "suspicion": 1,
+        "hand": ["p3-card-1"],
+        "evidence": {},
+        "accusationUsed": false
+      },
+      "player-4": {
+        "playerId": "player-4",
+        "role": "innocent",
+        "status": "active",
+        "hearts": 2,
+        "suspicion": 0,
+        "hand": ["p4-card-1"],
+        "evidence": {},
+        "accusationUsed": false
+      }
+    },
+    "drawPile": ["draw-pile-card"],
+    "discardPile": ["old-discard-card", "p1-card-8"],
+    "activeEffects": [],
+    "accusationUsed": [],
+    "winner": null
+  }
+}

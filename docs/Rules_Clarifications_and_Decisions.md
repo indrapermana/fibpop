@@ -54,6 +54,30 @@
 - If the Impostor is permanently forfeited, terminate as cancelled/no winner; there is no unwinnable waiting state.
 - Invalid/duplicate/stale actions have no state effect; deadlines resolve once.
 
+## Bilingual terminology audit (2026-11-17)
+
+Reviewed the English and Indonesian 2.1 rulebooks and compared the 24 catalog designs, copy counts, and listed effects. No material gameplay, quantity, or win-condition discrepancy was identified. The following core terms are used consistently:
+
+| English | Indonesian |
+|---|---|
+| Active | Aktif |
+| Cornered | Terpojok |
+| Eliminated | Tereliminasi |
+| Suspicion | Kecurigaan |
+| Evidence | Bukti |
+| Clue | Petunjuk |
+| Behavior | Perilaku |
+| Noisy | Mencolok |
+| Secret Finish | Habisi Diam-Diam |
+
+**Localization gap (not a rules discrepancy):** `shared/card_catalog_v1.json` contains only `name_en` and `rules_text_en`; Indonesian card names/effects exist in the Indonesian rulebook but not as machine-readable catalog fields. Address this in M2-02 without changing card IDs, quantities, or effects. Neither rulebook nor the catalog was changed during this audit, and no rules-version bump is needed.
+
+## Engine setup determinism (technical convention)
+
+To keep TypeScript and Dart setup fixtures reproducible, initialization uses an injected random source whose values are finite and in `[0, 1)`. It shuffles the role deck, then the action-card deck with Fisher–Yates, deals four cards from the end of the shuffled action deck to each player in seat order, and selects the starting seat afterward. Card instance IDs use `<design-id>:<1-based-copy-number>`. This specifies engine execution and fixture compatibility only; it does not change the approved tabletop rules or define a production random-number generator.
+
+The selected player enters `turn_start`; that transition draws up to two cards, shuffling the discard pile into the draw pile when needed, then advances to `active_turn`. If both piles are exhausted, draw only the cards still available. At turn end, the player selects exactly enough cards to meet the seven-card hand limit; play then advances clockwise. A Cornered player at their scheduled turn recovers to one Heart and skips that turn. These phase boundaries prevent duplicate turn-start draws and ensure Cornered recovery is applied in seat order.
+
 ## Remaining balance questions (NOT missing implementation rules)
 
 Investigation may not reveal enough information to make accusations satisfying; Spotlight utility and 4-player Impostor win rates require playtesting. These do not authorize silently modifying published rules or card quantities.
