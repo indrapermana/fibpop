@@ -5,6 +5,16 @@ export const CATALOG_VERSION = '1.0.0';
 
 export const playerRoleSchema = z.enum(['impostor', 'innocent']);
 export const playerStatusSchema = z.enum(['active', 'cornered', 'eliminated']);
+export const publicActionKindSchema = z.enum([
+  'successful_attack',
+  'noisy_manipulation',
+]);
+const publicActionRecordSchema = z
+  .object({
+    playerId: z.string().min(1),
+    kind: publicActionKindSchema,
+  })
+  .strict();
 export const matchPhaseSchema = z.enum([
   'created',
   'lobby',
@@ -54,12 +64,14 @@ export const matchStateSchema = z
     version: z.number().int().nonnegative(),
     actionsRemaining: z.number().int().min(0).max(2),
     attacksUsedThisTurn: z.number().int().min(0).max(1),
+    suspicionAwardedForDamageThisTurn: z.boolean(),
     currentPlayerId: z.string().nullable(),
     seatOrder: z.array(z.string().min(1)).min(4).max(8),
     deadlineUtc: z.string().datetime().nullable(),
     players: z.record(z.string(), playerStateSchema),
     drawPile: z.array(z.string()),
     discardPile: z.array(z.string()),
+    publicActionHistory: z.array(publicActionRecordSchema),
     activeEffects: z.array(z.unknown()),
     accusationUsed: z.array(z.string()),
     winner: matchOutcomeSchema.nullable(),
@@ -68,6 +80,8 @@ export const matchStateSchema = z
 
 export type PlayerRole = z.infer<typeof playerRoleSchema>;
 export type PlayerStatus = z.infer<typeof playerStatusSchema>;
+export type PublicActionKind = z.infer<typeof publicActionKindSchema>;
+export type PublicActionRecord = z.infer<typeof publicActionRecordSchema>;
 export type MatchPhase = z.infer<typeof matchPhaseSchema>;
 export type PlayerState = z.infer<typeof playerStateSchema>;
 export type MatchOutcome = z.infer<typeof matchOutcomeSchema>;

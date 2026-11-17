@@ -11,6 +11,7 @@
     "version": 9,
     "actionsRemaining": 0,
     "attacksUsedThisTurn": 1,
+    "suspicionAwardedForDamageThisTurn": false,
     "currentPlayerId": "player-1",
     "seatOrder": ["player-1", "player-2", "player-3", "player-4"],
     "deadlineUtc": null,
@@ -67,6 +68,7 @@
     },
     "drawPile": ["draw-pile-card"],
     "discardPile": ["old-discard-card"],
+    "publicActionHistory": [],
     "activeEffects": [],
     "accusationUsed": [],
     "winner": null
@@ -80,6 +82,7 @@
     "version": 10,
     "actionsRemaining": 0,
     "attacksUsedThisTurn": 0,
+    "suspicionAwardedForDamageThisTurn": false,
     "currentPlayerId": "player-4",
     "seatOrder": ["player-1", "player-2", "player-3", "player-4"],
     "deadlineUtc": null,
@@ -135,6 +138,7 @@
     },
     "drawPile": ["draw-pile-card"],
     "discardPile": ["old-discard-card", "p1-card-8"],
+    "publicActionHistory": [],
     "activeEffects": [],
     "accusationUsed": [],
     "winner": null

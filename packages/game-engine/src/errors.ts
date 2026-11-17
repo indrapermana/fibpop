@@ -10,6 +10,10 @@ export const engineErrorCodes = [
   'NO_ACTIONS_REMAIN',
   'ATTACK_LIMIT',
   'INVALID_TARGET',
+  'INVALID_PLAYER',
+  'INVALID_SUSPICION_CHANGE',
+  'INVALID_ACTION_PHASE',
+  'DUPLICATE_ATTACK_RECORD',
 ] as const;
 
 export type EngineErrorCode = (typeof engineErrorCodes)[number];

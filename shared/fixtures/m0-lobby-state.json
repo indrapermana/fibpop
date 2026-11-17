@@ -11,6 +11,7 @@
     "version": 0,
     "actionsRemaining": 0,
     "attacksUsedThisTurn": 0,
+    "suspicionAwardedForDamageThisTurn": false,
     "currentPlayerId": null,
     "seatOrder": ["player-1", "player-2", "player-3", "player-4"],
     "deadlineUtc": null,
@@ -58,6 +59,7 @@
     },
     "drawPile": [],
     "discardPile": [],
+    "publicActionHistory": [],
     "activeEffects": [],
     "accusationUsed": [],
     "winner": null

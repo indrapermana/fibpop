@@ -84,6 +84,8 @@ The selected player enters `turn_start`; that transition draws up to two cards, 
 
 The initial pure-engine command contract supports `END_TURN` (pass to the next seat) and `SPEND_ACTION`, with stable result codes. Attack-target validation is a non-mutating check that requires the current Active actor to have an action and attack available and selects another Active player. Reaction, accusation, and Secret Finish pass commands are deferred until their corresponding windows are implemented; no wire protocol behavior is implied here.
 
+`publicActionHistory` records only successful attacks that dealt damage and publicly visible Noisy manipulations, with the acting player and action kind. These are the qualifying logged actions for Behavior Evidence under R09. `suspicionAwardedForDamageThisTurn` is reset at turn boundaries and prevents repeated damage events from awarding more than one Suspicion in a turn; all Suspicion adjustments remain clamped to 0–3.
+
 ## Remaining balance questions (NOT missing implementation rules)
 
 Investigation may not reveal enough information to make accusations satisfying; Spotlight utility and 4-player Impostor win rates require playtesting. These do not authorize silently modifying published rules or card quantities.
