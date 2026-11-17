@@ -70,7 +70,7 @@ Reviewed the English and Indonesian 2.1 rulebooks and compared the 24 catalog de
 | Noisy | Mencolok |
 | Secret Finish | Habisi Diam-Diam |
 
-**Localization gap (not a rules discrepancy):** `shared/card_catalog_v1.json` contains only `name_en` and `rules_text_en`; Indonesian card names/effects exist in the Indonesian rulebook but not as machine-readable catalog fields. Address this in M2-02 without changing card IDs, quantities, or effects. Neither rulebook nor the catalog was changed during this audit, and no rules-version bump is needed.
+**Localization gap resolved in M2-02:** `shared/card_catalog_v1.json` remains the unchanged gameplay catalog; `apps/mobile/assets/card_text.json` provides separate English and Indonesian presentation text keyed by card ID. Tests compare the English text with the catalog and Indonesian text with the Indonesian rulebook. Neither rulebook nor the catalog requires a rules-version bump.
 
 ## Engine setup determinism (technical convention)
 

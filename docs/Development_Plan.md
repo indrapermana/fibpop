@@ -48,7 +48,7 @@ Tasks are ordered within each milestone and use stable IDs for tracking. Check a
 **Acceptance:** 4-player and 8-player matches complete without internet; save/resume is consistent; Dart engine passes shared fixtures; card content is readable and accessible; complete at least 30 documented manual playtests.
 
 - [x] **M2-01 — Establish Flutter app structure.** Select and pin one state-management approach; create navigation and feature folders without adding online dependencies. Flutter Riverpod 2.6.1 and built-in Navigator are in place; format, analysis, and widget tests pass.
-- [ ] **M2-02 — Localize the experience.** Add English and Bahasa Indonesia UI strings, card names/text, rules help, and language selection; keep gameplay data separate from translated presentation.
+- [x] **M2-02 — Localize the experience.** Add English and Bahasa Indonesia UI strings, card names/text, rules help, and language selection; keep gameplay data separate from translated presentation. Device-language fallback and in-session selection are tested; saving the selection remains M2-06.
 - [ ] **M2-03 — Build the playable table UI.** Implement player seats, Hearts, Suspicion, Evidence, draw/discard piles, hand, legal action prompts, confirmations, and Cornered/accusation screens.
 - [ ] **M2-04 — Port the offline rules engine to Dart.** Keep it pure Dart, inject randomness/clock, and match TypeScript behavior using the shared fixtures.
 - [ ] **M2-05 — Add constrained offline bots.** Implement initial bot behavior using only that bot’s private state and authorized public state; test against hidden-state leakage.

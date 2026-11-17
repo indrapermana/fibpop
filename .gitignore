@@ -9,3 +9,4 @@ build/
 coverage/
 node_modules/
 **/node_modules/
+/apps/mobile/lib/l10n/generated/

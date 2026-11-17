@@ -57,7 +57,7 @@
 4. Publish closed beta without intrusive monetization.
 5. Turn on purchases/ads only after consent, compliance, reliable entitlements, and retention validation.
 
-## Local development (M0)
+## Local development
 
 Requirements: Node.js 22+ with npm, Flutter 3.35+ with Dart, and the platform
 tooling required by Flutter for your target device. No cloud account or
@@ -84,6 +84,7 @@ Run the Flutter app:
 ```sh
 cd apps/mobile
 flutter pub get
+flutter gen-l10n
 flutter run
 ```
 
@@ -93,3 +94,9 @@ Navigator for routes. App bootstrap and routes live in `lib/app`; screens are
 organized by feature in `lib/features`. Offline play is not implemented yet.
 Shared cross-engine fixtures live in `shared/fixtures`; the Dart engine and its
 fixture runner are planned for M2.
+
+The app supports English and Bahasa Indonesia. It follows the device language by
+default; the language selector applies until the app restarts, with persistence
+planned for M2-06. UI messages are in `lib/l10n/*.arb`, and localized card
+presentation text is in `assets/card_text.json`, separate from gameplay data.
+After editing ARB files, run `flutter gen-l10n`.
