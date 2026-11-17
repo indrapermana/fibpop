@@ -52,6 +52,8 @@ export const matchStateSchema = z
     catalogVersion: z.literal(CATALOG_VERSION),
     phase: matchPhaseSchema,
     version: z.number().int().nonnegative(),
+    actionsRemaining: z.number().int().min(0).max(2),
+    attacksUsedThisTurn: z.number().int().min(0).max(1),
     currentPlayerId: z.string().nullable(),
     seatOrder: z.array(z.string().min(1)).min(4).max(8),
     deadlineUtc: z.string().datetime().nullable(),

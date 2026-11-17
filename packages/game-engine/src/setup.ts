@@ -96,6 +96,8 @@ export function createMatch(input: CreateMatchInput): MatchState {
     catalogVersion: CATALOG_VERSION,
     phase: 'turn_start',
     version: 0,
+    actionsRemaining: 0,
+    attacksUsedThisTurn: 0,
     currentPlayerId,
     seatOrder: [...input.playerIds],
     deadlineUtc: null,

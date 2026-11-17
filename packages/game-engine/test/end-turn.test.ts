@@ -84,6 +84,8 @@ describe('end turn', () => {
     const nextTurn = endTurn(activeTurn, []);
 
     expect(nextTurn.phase).toBe('turn_start');
+    expect(nextTurn.actionsRemaining).toBe(0);
+    expect(nextTurn.attacksUsedThisTurn).toBe(0);
     expect(nextTurn.currentPlayerId).not.toBe(activeTurn.currentPlayerId);
     expect(nextTurn.discardPile).toEqual(activeTurn.discardPile);
   });

@@ -7,7 +7,7 @@ import { parseCardCatalog } from '../src/card-catalog.js';
 import { turnStartFixtureSchema } from '../src/golden-fixture.js';
 import { createMatch } from '../src/setup.js';
 import { matchStateSchema } from '../src/state.js';
-import { beginTurn } from '../src/turns.js';
+import { beginTurn, spendAction } from '../src/turns.js';
 
 const catalogPath = fileURLToPath(
   new URL('../../../shared/card_catalog_v1.json', import.meta.url),
@@ -53,6 +53,8 @@ describe('turn-start draw', () => {
     expect(state.phase).toBe('turn_start');
     expect(nextState.phase).toBe('active_turn');
     expect(nextState.version).toBe(state.version + 1);
+    expect(nextState.actionsRemaining).toBe(2);
+    expect(nextState.attacksUsedThisTurn).toBe(0);
     const currentPlayerId = nextState.currentPlayerId;
     if (!currentPlayerId) {
       throw new Error('Match setup must select a current player');
@@ -91,5 +93,36 @@ describe('turn-start draw', () => {
       /only during the turn_start phase/,
     );
     expect(activeTurn.players['player-1'].hand).toHaveLength(2);
+  });
+
+  it('spends actions and allows no more than one attack per turn', () => {
+    const activeTurn = beginTurn(fixture.initialState, fixtureRandom());
+    const afterAttack = spendAction(activeTurn, 'attack');
+    const afterAction = spendAction(afterAttack, 'action');
+
+    expect(afterAttack.actionsRemaining).toBe(1);
+    expect(afterAttack.attacksUsedThisTurn).toBe(1);
+    expect(afterAction.actionsRemaining).toBe(0);
+    expect(afterAction.attacksUsedThisTurn).toBe(1);
+    expect(() => spendAction(afterAction, 'action')).toThrow(
+      /No actions remain/,
+    );
+    expect(() => spendAction(afterAttack, 'attack')).toThrow(
+      /Only one attack is allowed/,
+    );
+  });
+
+  it('does not consume an action for a validated free action', () => {
+    const activeTurn = beginTurn(fixture.initialState, fixtureRandom());
+    const nextState = spendAction(activeTurn, 'action', 0);
+
+    expect(nextState.actionsRemaining).toBe(2);
+    expect(nextState.attacksUsedThisTurn).toBe(0);
+  });
+
+  it('rejects action spending outside the active turn', () => {
+    expect(() => spendAction(fixture.initialState, 'action')).toThrow(
+      /only during the active_turn phase/,
+    );
   });
 });

@@ -14,6 +14,8 @@
     "catalogVersion": "1.0.0",
     "phase": "turn_start",
     "version": 0,
+    "actionsRemaining": 0,
+    "attacksUsedThisTurn": 0,
     "currentPlayerId": "player-2",
     "seatOrder": ["player-1", "player-2", "player-3", "player-4"],
     "deadlineUtc": null,

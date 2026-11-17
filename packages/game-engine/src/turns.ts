@@ -2,7 +2,10 @@ import { matchStateSchema, type MatchState } from './state.js';
 import { shuffleInPlace, type RandomSource } from './random.js';
 
 export const CARDS_PER_TURN = 2;
+export const ACTIONS_PER_TURN = 2;
 export const MAX_HAND_SIZE = 7;
+
+export type TurnActionKind = 'attack' | 'action';
 
 export function beginTurn(state: MatchState, random: RandomSource): MatchState {
   if (state.phase !== 'turn_start') {
@@ -49,9 +52,49 @@ export function beginTurn(state: MatchState, random: RandomSource): MatchState {
     ...state,
     phase: 'active_turn',
     version: state.version + 1,
+    actionsRemaining: ACTIONS_PER_TURN,
+    attacksUsedThisTurn: 0,
     players,
     drawPile,
     discardPile,
+  });
+}
+
+export function spendAction(
+  state: MatchState,
+  kind: TurnActionKind,
+  cost: 0 | 1 = 1,
+): MatchState {
+  if (state.phase !== 'active_turn') {
+    throw new Error('An action can be spent only during the active_turn phase');
+  }
+
+  if (kind !== 'attack' && kind !== 'action') {
+    throw new Error(`Unknown turn action kind: ${String(kind)}`);
+  }
+
+  if (cost !== 0 && cost !== 1) {
+    throw new Error('Turn action cost must be 0 or 1');
+  }
+
+  if (kind === 'attack' && cost !== 1) {
+    throw new Error('An attack must spend one action');
+  }
+
+  if (kind === 'attack' && state.attacksUsedThisTurn >= 1) {
+    throw new Error('Only one attack is allowed per turn');
+  }
+
+  if (cost === 1 && state.actionsRemaining < 1) {
+    throw new Error('No actions remain this turn');
+  }
+
+  return matchStateSchema.parse({
+    ...state,
+    version: state.version + 1,
+    actionsRemaining: state.actionsRemaining - cost,
+    attacksUsedThisTurn:
+      state.attacksUsedThisTurn + (kind === 'attack' ? 1 : 0),
   });
 }
 
@@ -149,6 +192,8 @@ export function endTurn(
     ...state,
     phase: 'turn_start',
     version: state.version + 1,
+    actionsRemaining: 0,
+    attacksUsedThisTurn: 0,
     currentPlayerId: nextPlayerId,
     players,
     discardPile,
