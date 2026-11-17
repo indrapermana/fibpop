@@ -1,5 +1,6 @@
 import { drawCardsFromPiles } from './deck.js';
 import { EngineError } from './errors.js';
+import { getCardDesignId } from './card-instance.js';
 import { nextRandomIndex, type RandomSource } from './random.js';
 import { matchStateSchema, type MatchState } from './state.js';
 import { hasBehaviorEvidenceQualifyingAction } from './suspicion.js';
@@ -48,10 +49,6 @@ const playableInvestigationCardIds = new Set<string>([
   ...investigationCardIds,
   'card_22',
 ]);
-
-function cardDesignId(cardInstanceId: string): string | null {
-  return /^(card_\d{2}):[1-9]\d*$/.exec(cardInstanceId)?.[1] ?? null;
-}
 
 function requireActiveTurnActor(
   state: MatchState,
@@ -182,7 +179,7 @@ export function playInvestigation(
   requireActiveTurnActor(state, input.actorPlayerId);
   const target = requireTarget(state, input.targetPlayerId);
   const actor = state.players[input.actorPlayerId];
-  const cardId = cardDesignId(input.cardInstanceId);
+  const cardId = getCardDesignId(input.cardInstanceId);
 
   if (cardId === null || !playableInvestigationCardIds.has(cardId)) {
     throw new EngineError(
@@ -228,7 +225,7 @@ export function playInvestigation(
     if (
       input.defense.kind === 'misdirection' &&
       (input.targetPlayerId === input.actorPlayerId ||
-        cardDesignId(defendedCardInstanceId) !== 'card_24')
+        getCardDesignId(defendedCardInstanceId) !== 'card_24')
     ) {
       throw new EngineError(
         'INVALID_INSPECTION_DEFENSE',

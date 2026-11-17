@@ -1,4 +1,6 @@
 export * from './card-catalog.js';
+export * from './card-instance.js';
+export * from './attacks.js';
 export * from './commands.js';
 export * from './deck.js';
 export * from './errors.js';

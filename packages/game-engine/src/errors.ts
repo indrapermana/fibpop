@@ -16,6 +16,8 @@ export const engineErrorCodes = [
   'DUPLICATE_ATTACK_RECORD',
   'INVALID_CARD',
   'INVALID_INSPECTION_DEFENSE',
+  'INVALID_REACTION',
+  'SAFE_PLACE_ALREADY_ACTIVE',
 ] as const;
 
 export type EngineErrorCode = (typeof engineErrorCodes)[number];

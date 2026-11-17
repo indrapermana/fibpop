@@ -51,6 +51,48 @@ const playerStateSchema = z
   })
   .strict();
 
+const activeEffectSchema = z
+  .object({
+    type: z.literal('safe_place'),
+    casterPlayerId: z.string().min(1),
+    targetPlayerId: z.string().min(1),
+  })
+  .strict();
+const activeEffectsSchema = z
+  .array(activeEffectSchema)
+  .superRefine((effects, context) => {
+    const shieldedPlayerIds = new Set<string>();
+    effects.forEach((effect, index) => {
+      if (shieldedPlayerIds.has(effect.targetPlayerId)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Player already has a Safe Place shield: ${effect.targetPlayerId}`,
+          path: [index, 'targetPlayerId'],
+        });
+      }
+
+      shieldedPlayerIds.add(effect.targetPlayerId);
+    });
+  });
+
+const pendingAttackSchema = z
+  .object({
+    attackerPlayerId: z.string().min(1),
+    targetPlayerId: z.string().min(1),
+    attackCardInstanceId: z.string().min(1),
+    stepInPlayerIds: z.array(z.string().min(1)),
+    stepInIndex: z.number().int().min(-1),
+  })
+  .strict();
+
+const pendingCorneredSchema = z
+  .object({
+    attackerPlayerId: z.string().min(1),
+    targetPlayerId: z.string().min(1),
+    attackCardInstanceId: z.string().min(1),
+  })
+  .strict();
+
 const matchOutcomeSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('winner'), playerId: z.string().min(1) }).strict(),
   z.object({ kind: z.literal('cancelled_no_winner') }).strict(),
@@ -68,13 +110,15 @@ export const matchStateSchema = z
     suspicionAwardedForDamageThisTurn: z.boolean(),
     investigationTargetsThisTurn: z.array(z.string()).default([]),
     currentPlayerId: z.string().nullable(),
+    pendingAttack: pendingAttackSchema.nullable().default(null),
+    pendingCornered: pendingCorneredSchema.nullable().default(null),
     seatOrder: z.array(z.string().min(1)).min(4).max(8),
     deadlineUtc: z.string().datetime().nullable(),
     players: z.record(z.string(), playerStateSchema),
     drawPile: z.array(z.string()),
     discardPile: z.array(z.string()),
     publicActionHistory: z.array(publicActionRecordSchema),
-    activeEffects: z.array(z.unknown()),
+    activeEffects: activeEffectsSchema,
     accusationUsed: z.array(z.string()),
     winner: matchOutcomeSchema.nullable(),
   })
@@ -86,5 +130,8 @@ export type PublicActionKind = z.infer<typeof publicActionKindSchema>;
 export type PublicActionRecord = z.infer<typeof publicActionRecordSchema>;
 export type MatchPhase = z.infer<typeof matchPhaseSchema>;
 export type PlayerState = z.infer<typeof playerStateSchema>;
+export type ActiveEffect = z.infer<typeof activeEffectSchema>;
+export type PendingAttack = z.infer<typeof pendingAttackSchema>;
+export type PendingCornered = z.infer<typeof pendingCorneredSchema>;
 export type MatchOutcome = z.infer<typeof matchOutcomeSchema>;
 export type MatchState = z.infer<typeof matchStateSchema>;

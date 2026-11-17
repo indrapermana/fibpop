@@ -167,6 +167,7 @@ export function endTurn(
   const discardPile = [...state.discardPile, ...cardInstanceIdsToDiscard];
   const currentSeatIndex = state.seatOrder.indexOf(currentPlayerId);
   let nextPlayerId: string | null = null;
+  let activeEffects = [...state.activeEffects];
 
   for (let offset = 1; offset <= state.seatOrder.length; offset += 1) {
     const candidateId =
@@ -179,6 +180,10 @@ export function endTurn(
     if (candidate.status === 'eliminated') {
       continue;
     }
+
+    activeEffects = activeEffects.filter(
+      (effect) => effect.casterPlayerId !== candidateId,
+    );
 
     if (candidate.status === 'cornered') {
       if (candidate.hearts !== 0) {
@@ -218,5 +223,6 @@ export function endTurn(
     currentPlayerId: nextPlayerId,
     players,
     discardPile,
+    activeEffects,
   });
 }
