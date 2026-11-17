@@ -82,6 +82,8 @@ The selected player enters `turn_start`; that transition draws up to two cards, 
 
 `active_turn` begins with two actions and zero attacks used. Each accepted normal action spends one action; an attack also increments the per-turn attack count, which cannot exceed one. Reactions do not use this action counter. The engine allows a validated zero-cost action for an explicit rules exception, such as the first eligible Investigation against a player at 3 Suspicion; card-effect logic must verify that exception before using the zero-cost path. Ending a turn resets both counters, and the next `beginTurn` initializes them again. This records the implementation contract for rules 2.1.0; it does not change action limits.
 
+The initial pure-engine command contract supports `END_TURN` (pass to the next seat) and `SPEND_ACTION`, with stable result codes. Attack-target validation is a non-mutating check that requires the current Active actor to have an action and attack available and selects another Active player. Reaction, accusation, and Secret Finish pass commands are deferred until their corresponding windows are implemented; no wire protocol behavior is implied here.
+
 ## Remaining balance questions (NOT missing implementation rules)
 
 Investigation may not reveal enough information to make accusations satisfying; Spotlight utility and 4-player Impostor win rates require playtesting. These do not authorize silently modifying published rules or card quantities.

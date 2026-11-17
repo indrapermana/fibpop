@@ -1,0 +1,36 @@
+export const engineErrorCodes = [
+  'INVALID_COMMAND',
+  'INVALID_PHASE',
+  'NOT_YOUR_TURN',
+  'NOT_ELIGIBLE',
+  'INVALID_DISCARD_COUNT',
+  'INVALID_DISCARD',
+  'INVALID_ACTION',
+  'INVALID_ACTION_COST',
+  'NO_ACTIONS_REMAIN',
+  'ATTACK_LIMIT',
+  'INVALID_TARGET',
+] as const;
+
+export type EngineErrorCode = (typeof engineErrorCodes)[number];
+
+export class EngineError extends Error {
+  constructor(
+    readonly code: EngineErrorCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'EngineError';
+  }
+}
+
+export type EngineResult<T> =
+  | { ok: true; value: T }
+  | { ok: false; error: { code: EngineErrorCode; message: string } };
+
+export function failed<T = never>(
+  code: EngineErrorCode,
+  message: string,
+): EngineResult<T> {
+  return { ok: false, error: { code, message } };
+}

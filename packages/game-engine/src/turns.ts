@@ -1,5 +1,6 @@
 import { matchStateSchema, type MatchState } from './state.js';
 import { shuffleInPlace, type RandomSource } from './random.js';
+import { EngineError } from './errors.js';
 
 export const CARDS_PER_TURN = 2;
 export const ACTIONS_PER_TURN = 2;
@@ -66,27 +67,42 @@ export function spendAction(
   cost: 0 | 1 = 1,
 ): MatchState {
   if (state.phase !== 'active_turn') {
-    throw new Error('An action can be spent only during the active_turn phase');
+    throw new EngineError(
+      'INVALID_PHASE',
+      'An action can be spent only during the active_turn phase',
+    );
   }
 
   if (kind !== 'attack' && kind !== 'action') {
-    throw new Error(`Unknown turn action kind: ${String(kind)}`);
+    throw new EngineError(
+      'INVALID_ACTION',
+      `Unknown turn action kind: ${String(kind)}`,
+    );
   }
 
   if (cost !== 0 && cost !== 1) {
-    throw new Error('Turn action cost must be 0 or 1');
+    throw new EngineError(
+      'INVALID_ACTION_COST',
+      'Turn action cost must be 0 or 1',
+    );
   }
 
   if (kind === 'attack' && cost !== 1) {
-    throw new Error('An attack must spend one action');
+    throw new EngineError(
+      'INVALID_ACTION_COST',
+      'An attack must spend one action',
+    );
   }
 
   if (kind === 'attack' && state.attacksUsedThisTurn >= 1) {
-    throw new Error('Only one attack is allowed per turn');
+    throw new EngineError(
+      'ATTACK_LIMIT',
+      'Only one attack is allowed per turn',
+    );
   }
 
   if (cost === 1 && state.actionsRemaining < 1) {
-    throw new Error('No actions remain this turn');
+    throw new EngineError('NO_ACTIONS_REMAIN', 'No actions remain this turn');
   }
 
   return matchStateSchema.parse({
@@ -103,7 +119,10 @@ export function endTurn(
   cardInstanceIdsToDiscard: string[],
 ): MatchState {
   if (state.phase !== 'active_turn') {
-    throw new Error('A turn can end only during the active_turn phase');
+    throw new EngineError(
+      'INVALID_PHASE',
+      'A turn can end only during the active_turn phase',
+    );
   }
 
   const currentPlayerId = state.currentPlayerId;
@@ -121,7 +140,8 @@ export function endTurn(
     currentPlayer.hand.length - MAX_HAND_SIZE,
   );
   if (cardInstanceIdsToDiscard.length !== requiredDiscardCount) {
-    throw new Error(
+    throw new EngineError(
+      'INVALID_DISCARD_COUNT',
       `Discard exactly ${requiredDiscardCount} card(s) to end the turn`,
     );
   }
@@ -129,12 +149,18 @@ export function endTurn(
   if (
     new Set(cardInstanceIdsToDiscard).size !== cardInstanceIdsToDiscard.length
   ) {
-    throw new Error('Discarded card instance IDs must be unique');
+    throw new EngineError(
+      'INVALID_DISCARD',
+      'Discarded card instance IDs must be unique',
+    );
   }
 
   const hand = new Set(currentPlayer.hand);
   if (cardInstanceIdsToDiscard.some((cardId) => !hand.has(cardId))) {
-    throw new Error('Every discarded card must be in the current player hand');
+    throw new EngineError(
+      'INVALID_DISCARD',
+      'Every discarded card must be in the current player hand',
+    );
   }
 
   const discarded = new Set(cardInstanceIdsToDiscard);
