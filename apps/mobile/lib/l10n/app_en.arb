@@ -6,6 +6,76 @@
   "systemLanguage": "Device language",
   "offlinePlay": "Offline play",
   "offlinePlayUnavailable": "Offline play is not available yet.",
+  "offlineMatchSetup": "Start a local match",
+  "offlinePlayerCount": "Players",
+  "offlineStartMatch": "Start match",
+  "offlinePlayer": "Player {number}",
+  "@offlinePlayer": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "offlineYou": "Current turn",
+  "offlineRole": "Your secret role",
+  "offlineRevealRole": "Reveal my role",
+  "offlineHideRole": "Hide my role",
+  "offlineImpostor": "Impostor",
+  "offlineInnocent": "Innocent",
+  "offlineActive": "Active",
+  "offlineCornered": "Cornered",
+  "offlineEliminated": "Eliminated",
+  "offlineHearts": "Hearts",
+  "offlineSuspicion": "Suspicion",
+  "offlineHand": "Your hand",
+  "offlineEvidence": "Your Evidence",
+  "offlineNoEvidence": "No Evidence recorded.",
+  "offlineClue": "Clue",
+  "offlineBehavior": "Behavior",
+  "offlineDrawPile": "Draw pile: {count}",
+  "@offlineDrawPile": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offlineDiscardPile": "Discard pile: {count}",
+  "@offlineDiscardPile": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offlineActionsRemaining": "Actions remaining: {count}",
+  "@offlineActionsRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offlineEndTurn": "End turn",
+  "offlineDiscardExcess": "Choose {count} card(s) to discard",
+  "@offlineDiscardExcess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offlineConfirm": "Confirm",
+  "offlineCancel": "Cancel",
+  "offlinePhaseTurnStart": "Starting turn…",
+  "offlinePhaseActiveTurn": "Take your turn",
+  "offlinePhaseAwaitingReaction": "Attack reaction",
+  "offlinePhaseCorneredResolution": "Cornered resolution",
+  "offlinePhaseAwaitingCardEffect": "Card effect",
+  "offlinePhaseFinished": "Match finished",
+  "offlinePhaseCancelled": "Match cancelled",
+  "offlineActionsComingSoon": "Action controls are coming in the next table UI step.",
   "rulesHelp": "How to play",
   "cardGuide": "Card guide",
   "contentLoadError": "Card descriptions could not be loaded.",

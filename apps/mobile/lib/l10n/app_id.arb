@@ -6,6 +6,76 @@
   "systemLanguage": "Bahasa perangkat",
   "offlinePlay": "Main offline",
   "offlinePlayUnavailable": "Permainan offline belum tersedia.",
+  "offlineMatchSetup": "Mulai permainan lokal",
+  "offlinePlayerCount": "Pemain",
+  "offlineStartMatch": "Mulai permainan",
+  "offlinePlayer": "Pemain {number}",
+  "@offlinePlayer": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "offlineYou": "Giliran sekarang",
+  "offlineRole": "Peran rahasiamu",
+  "offlineRevealRole": "Tampilkan peranku",
+  "offlineHideRole": "Sembunyikan peranku",
+  "offlineImpostor": "Impostor",
+  "offlineInnocent": "Innocent",
+  "offlineActive": "Aktif",
+  "offlineCornered": "Terpojok",
+  "offlineEliminated": "Tereliminasi",
+  "offlineHearts": "Hati",
+  "offlineSuspicion": "Kecurigaan",
+  "offlineHand": "Kartu di tanganmu",
+  "offlineEvidence": "Buktimu",
+  "offlineNoEvidence": "Belum ada Bukti.",
+  "offlineClue": "Petunjuk",
+  "offlineBehavior": "Perilaku",
+  "offlineDrawPile": "Tumpukan ambil: {count}",
+  "@offlineDrawPile": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offlineDiscardPile": "Tumpukan buang: {count}",
+  "@offlineDiscardPile": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offlineActionsRemaining": "Aksi tersisa: {count}",
+  "@offlineActionsRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offlineEndTurn": "Akhiri giliran",
+  "offlineDiscardExcess": "Pilih {count} kartu untuk dibuang",
+  "@offlineDiscardExcess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offlineConfirm": "Konfirmasi",
+  "offlineCancel": "Batal",
+  "offlinePhaseTurnStart": "Memulai giliran…",
+  "offlinePhaseActiveTurn": "Giliranmu",
+  "offlinePhaseAwaitingReaction": "Reaksi serangan",
+  "offlinePhaseCorneredResolution": "Penyelesaian Terpojok",
+  "offlinePhaseAwaitingCardEffect": "Efek kartu",
+  "offlinePhaseFinished": "Permainan selesai",
+  "offlinePhaseCancelled": "Permainan dibatalkan",
+  "offlineActionsComingSoon": "Kontrol aksi akan hadir pada langkah UI meja berikutnya.",
   "rulesHelp": "Cara bermain",
   "cardGuide": "Panduan kartu",
   "contentLoadError": "Deskripsi kartu tidak dapat dimuat.",

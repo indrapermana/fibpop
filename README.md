@@ -91,7 +91,9 @@ flutter run
 Use `flutter analyze` and `flutter test` from `apps/mobile` to check the mobile
 app. The app uses Flutter Riverpod 2.6.1 for state management and Flutter
 Navigator for routes. App bootstrap and routes live in `lib/app`; screens are
-organized by feature in `lib/features`. Offline play is not implemented yet.
+organized by feature in `lib/features`. Offline play now supports local match
+setup, a private current-player hand/role view, table status, and turn cycling.
+Action/reaction controls and full local match completion remain in progress.
 Shared cross-engine fixtures live in `shared/fixtures`. The pure Dart engine
 in `lib/engine` currently implements setup, turn transitions, Suspicion,
 public-action history, Evidence, investigations, and attacks through

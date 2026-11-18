@@ -58,6 +58,7 @@ flutter:
   generate: true
   assets:
     - assets/card_text.json
+    - ../../shared/card_catalog_v1.json
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
