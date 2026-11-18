@@ -98,9 +98,9 @@ public-action history, Evidence, investigations, and attacks through
 Cornered-window entry and resolution, including accusations, Secret Finish,
 Last Chance, interrupted-turn resumption, terminal outcomes, and forfeits.
 All current action-card effects, player/public projections, and authoritative
-transition replay are implemented. Full fixture parity remains.
-Unsupported phases and pending reaction states are rejected, not treated as
-playable.
+transition replay are implemented. The Dart engine passes all 36 shared
+gameplay scenarios, plus the shared setup and turn fixtures. Unsupported match
+phases are rejected by the state parser.
 
 The app supports English and Bahasa Indonesia. It follows the device language by
 default; the language selector applies until the app restarts, with persistence
